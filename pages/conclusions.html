@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conclusiones | SimNum</title>
+  <meta name="description" content="Conclusiones del proyecto de simulación numérica de crisis.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <div id="nav-container"></div>
+
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Inicio</a><span>/</span><span>Conclusiones</span></div>
+    <h1>Conclusiones del Proyecto</h1>
+    <p>Síntesis de resultados, lecciones aprendidas y recomendaciones.</p>
+  </div>
+
+  <section class="section">
+    <!-- Key Findings -->
+    <div class="section-header" style="text-align:left">
+      <div class="section-badge">Hallazgos</div>
+      <h2 class="section-title">Hallazgos Principales</h2>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:3rem">
+      <div class="glass-card">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+          <span style="font-size:1.5rem">📐</span>
+          <h3 style="font-weight:700">Sistemas Lineales — Distribución Óptima</h3>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:0.75rem">Los métodos iterativos (Jacobi, Gauss-Seidel, SOR) demostraron ser eficientes para resolver sistemas de distribución de suministros. <strong style="color:var(--accent-cyan)">Gauss-Seidel convergió en promedio 40% más rápido que Jacobi</strong>, mientras que SOR con ω óptimo logró la convergencia más rápida de todos.</p>
+        <p style="color:var(--text-secondary);font-size:0.9rem"><strong>Conclusión:</strong> Para redes de distribución en tiempo real, los métodos iterativos son preferibles al método directo LU cuando la matriz es dispersa y de gran tamaño.</p>
+      </div>
+
+      <div class="glass-card">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+          <span style="font-size:1.5rem">🎯</span>
+          <h3 style="font-weight:700">Raíces — Umbrales de Alerta Temprana</h3>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:0.75rem"><strong style="color:var(--accent-cyan)">Newton-Raphson fue el método más eficiente</strong>, convergiendo en 4-6 iteraciones frente a las 20+ de Bisección. Sin embargo, Bisección es más robusto cuando no se dispone de la derivada.</p>
+        <p style="color:var(--text-secondary);font-size:0.9rem"><strong>Conclusión:</strong> Los umbrales críticos calculados permiten establecer sistemas de alerta temprana. Conocer el día exacto en que las reservas llegan a nivel crítico da margen de acción.</p>
+      </div>
+
+      <div class="glass-card">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+          <span style="font-size:1.5rem">📈</span>
+          <h3 style="font-weight:700">Interpolación — Predicción de Precios</h3>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:0.75rem"><strong style="color:var(--accent-cyan)">Los splines cúbicos produjeron las curvas más suaves y realistas</strong>, evitando las oscilaciones del polinomio de Lagrange/Newton en los extremos. La diferencia entre métodos fue menor al 5% para puntos intermedios.</p>
+        <p style="color:var(--text-secondary);font-size:0.9rem"><strong>Conclusión:</strong> Para la estimación de precios con datos incompletos, los splines cúbicos son la mejor opción por su estabilidad y la naturalidad de las curvas generadas.</p>
+      </div>
+
+      <div class="glass-card">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+          <span style="font-size:1.5rem">∫</span>
+          <h3 style="font-weight:700">Integración — Impacto Económico Real</h3>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:0.75rem">La integración numérica reveló que <strong style="color:var(--accent-rose)">el sobrecosto acumulado durante 30 días de crisis supera el 170%</strong> del costo normal. Simpson 1/3 y 3/8 mostraron mayor precisión que trapecios.</p>
+        <p style="color:var(--text-secondary);font-size:0.9rem"><strong>Conclusión:</strong> Cuantificar el impacto acumulado es esencial para diseñar políticas de compensación económica y subsidios dirigidos a las familias más afectadas.</p>
+      </div>
+
+      <div class="glass-card" style="grid-column: 1 / -1">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+          <span style="font-size:1.5rem">δ</span>
+          <h3 style="font-weight:700">Ecuaciones Diferenciales — Dinámica Temporal</h3>
+        </div>
+        <div class="grid-2" style="gap:1.5rem">
+          <div>
+            <h4 style="color:var(--accent-cyan);margin-bottom:0.5rem">Agotamiento de Combustible</h4>
+            <p style="color:var(--text-secondary);font-size:0.9rem"><strong style="color:var(--accent-cyan)">Runge-Kutta 4 demostró ser significativamente más preciso</strong> que Euler, especialmente para períodos largos. La diferencia entre RK4 y Euler al día 60 fue de hasta un 15% en el valor de las reservas.</p>
+          </div>
+          <div>
+            <h4 style="color:var(--accent-rose);margin-bottom:0.5rem">Descontento Social (SIR)</h4>
+            <p style="color:var(--text-secondary);font-size:0.9rem">El modelo SIR reveló que <strong style="color:var(--accent-rose)">el pico de descontento ocurre aproximadamente al día 35-40</strong>. Las intervenciones deben ser anteriores a este pico para ser efectivas. Después del pico, la resignación domina.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lessons Learned -->
+    <div class="section-header" style="text-align:left">
+      <div class="section-badge">Lecciones</div>
+      <h2 class="section-title">Lecciones Aprendidas</h2>
+    </div>
+
+    <div class="grid-3" style="margin-bottom:3rem">
+      <div class="glass-card" style="text-align:center">
+        <div style="font-size:2rem;margin-bottom:0.75rem">⚖️</div>
+        <h3 style="font-weight:700;margin-bottom:0.5rem">Precisión vs. Eficiencia</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem">No siempre el método más preciso es el más adecuado. En sistemas de monitoreo en tiempo real, la velocidad de cálculo puede ser más importante que la precisión absoluta.</p>
+      </div>
+      <div class="glass-card" style="text-align:center">
+        <div style="font-size:2rem;margin-bottom:0.75rem">🔄</div>
+        <h3 style="font-weight:700;margin-bottom:0.5rem">Convergencia Condicional</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem">Los métodos iterativos solo convergen bajo ciertas condiciones (diagonal dominante, definida positiva). Validar estas condiciones antes de aplicar el método es crítico.</p>
+      </div>
+      <div class="glass-card" style="text-align:center">
+        <div style="font-size:2rem;margin-bottom:0.75rem">📊</div>
+        <h3 style="font-weight:700;margin-bottom:0.5rem">Visualización es Clave</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem">Las gráficas permiten detectar patrones, anomalías y tendencias que las tablas numéricas por sí solas no revelan. La comunicación visual facilita la toma de decisiones.</p>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="section-header" style="text-align:left">
+      <div class="section-badge">Recomendaciones</div>
+      <h2 class="section-title">Recomendaciones para Tomadores de Decisiones</h2>
+    </div>
+
+    <div style="margin-bottom:2rem">
+      <div class="interpretation-box">
+        <h4>📋 Recomendaciones Clave</h4>
+        <ol style="color:var(--text-secondary);font-size:0.9rem;line-height:2;padding-left:1.5rem">
+          <li><strong>Implementar sistemas de alerta temprana</strong> basados en los umbrales críticos calculados mediante raíces de ecuaciones.</li>
+          <li><strong>Optimizar la distribución de suministros</strong> utilizando soluciones de sistemas lineales para maximizar la cobertura con recursos limitados.</li>
+          <li><strong>Monitorear precios diariamente</strong> y usar interpolación para detectar tendencias anómalas antes de que se conviertan en crisis.</li>
+          <li><strong>Presupuestar costos de crisis</strong> usando integración numérica para estimar el impacto económico acumulado y provisionar fondos de emergencia.</li>
+          <li><strong>Intervenir antes del pico de descontento</strong> identificado por el modelo SIR, ya que las intervenciones post-pico son significativamente menos efectivas.</li>
+          <li><strong>Combatir la desinformación proactivamente</strong> en las zonas identificadas como más vulnerables a la propagación de rumores.</li>
+          <li><strong>Usar múltiples métodos numéricos</strong> para validar resultados. La concordancia entre métodos diferentes aumenta la confiabilidad de las predicciones.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Final Reflection -->
+    <div class="glass-card" style="text-align:center;padding:3rem">
+      <div style="font-size:3rem;margin-bottom:1rem">🎓</div>
+      <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:1rem">Reflexión Final</h2>
+      <p style="color:var(--text-secondary);font-size:1rem;max-width:700px;margin:0 auto;line-height:1.8">
+        Este proyecto demuestra que los métodos numéricos no son meras herramientas académicas, sino
+        <strong style="color:var(--accent-cyan)">instrumentos poderosos para entender y responder a crisis reales</strong>.
+        La capacidad de modelar, simular y predecir comportamientos complejos es fundamental para una
+        sociedad que busca tomar decisiones informadas y anticiparse a los problemas.
+      </p>
+    </div>
+  </section>
+
+  <div id="footer-container"></div>
+  <script src="../js/main.js"></script>
+</body>
+</html>

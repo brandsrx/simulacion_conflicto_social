@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistemas de Ecuaciones Lineales | SimNum</title>
+  <meta name="description" content="Resolución de sistemas lineales con LU, Jacobi, Gauss-Seidel, SOR y Gradiente Conjugado.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <div id="nav-container"></div>
+
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Inicio</a><span>/</span><a href="methods.html">Métodos</a><span>/</span><span>Sistemas Lineales</span></div>
+    <h1>Sistemas de Ecuaciones Lineales</h1>
+    <p>Resolución de Ax = b con 5 métodos numéricos aplicados a redes de distribución y propagación de rumores.</p>
+  </div>
+
+  <div id="ls-module" class="section">
+    <!-- Method Explanation -->
+    <div class="method-explanation">
+      <h3>Fundamento Matemático</h3>
+      <p>Un sistema de ecuaciones lineales Ax = b modela relaciones lineales entre variables. En el contexto de crisis, estas variables representan flujos de suministros entre ciudades o niveles de propagación de rumores entre zonas urbanas.</p>
+      <div class="math-block">
+        A·x = b → Encontrar x = [x₁, x₂, ..., xₙ]ᵀ tal que satisfaga todas las ecuaciones simultáneamente
+      </div>
+    </div>
+
+    <!-- Scenario Selection -->
+    <div style="margin-bottom:1.5rem">
+      <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem">Selección de Escenario</h3>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem">
+        <button class="btn btn-primary btn-sm scenario-tab active" data-scenario="scenario-supply">🚛 Distribución de Suministros</button>
+        <button class="btn btn-secondary btn-sm scenario-tab" data-scenario="scenario-rumor">📢 Rumores y Pánico</button>
+      </div>
+      <div class="scenario-desc active" id="scenario-supply">
+        <div class="scenario-box">
+          <h3>Escenario A: Red de Distribución de Suministros</h3>
+          <p>Cinco ciudades conectadas por rutas de transporte. La matriz A representa los coeficientes de flujo entre nodos. El vector b representa la demanda de cada ciudad. La solución x indica las cantidades óptimas a transportar.</p>
+        </div>
+      </div>
+      <div class="scenario-desc" id="scenario-rumor">
+        <div class="scenario-box">
+          <h3>Escenario F: Propagación de Rumores y Compras de Pánico</h3>
+          <p>Cuatro zonas urbanas donde los rumores se propagan. La matriz modela la interacción entre zonas. El vector representa el nivel inicial de propagación. La solución indica el nivel estable de rumores en cada zona.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuration -->
+    <div class="grid-2" style="margin-bottom:1.5rem">
+      <div class="glass-card">
+        <h3 style="font-weight:700;margin-bottom:1rem">Configuración</h3>
+        <div class="grid-2" style="gap:0.75rem">
+          <div class="form-group">
+            <label class="form-label">Método</label>
+            <select id="ls-method" class="form-select">
+              <option value="lu">Descomposición LU</option>
+              <option value="jacobi">Jacobi</option>
+              <option value="gauss-seidel" selected>Gauss-Seidel</option>
+              <option value="sor">SOR</option>
+              <option value="conjugate-gradient">Gradiente Conjugado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tamaño de Matriz</label>
+            <select id="ls-matrix-size" class="form-select">
+              <option value="3">3×3</option>
+              <option value="4">4×4</option>
+              <option value="5" selected>5×5</option>
+              <option value="6">6×6</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tolerancia</label>
+            <input type="number" id="ls-tolerance" value="0.000001" step="any" class="form-input mono">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Máx. Iteraciones</label>
+            <input type="number" id="ls-max-iter" value="100" class="form-input mono">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ω (SOR)</label>
+            <input type="number" id="ls-omega" value="1.25" step="0.05" min="0.1" max="1.95" class="form-input mono">
+          </div>
+        </div>
+      </div>
+      <div class="glass-card">
+        <h3 style="font-weight:700;margin-bottom:1rem">Matriz y Vector</h3>
+        <div id="ls-matrix-container"></div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:0.75rem;margin-bottom:2rem;flex-wrap:wrap">
+      <button id="ls-solve-btn" class="btn btn-primary">▶ Resolver Sistema</button>
+      <button id="ls-compare-btn" class="btn btn-secondary">📊 Comparar Todos los Métodos</button>
+    </div>
+
+    <!-- Results -->
+    <div id="ls-results" style="display:none;margin-bottom:2rem"></div>
+
+    <!-- Charts -->
+    <div class="grid-2" style="margin-bottom:2rem">
+      <div class="chart-container"><canvas id="ls-conv-chart" height="300"></canvas></div>
+      <div class="chart-container"><canvas id="ls-bar-chart" height="300"></canvas></div>
+    </div>
+
+    <!-- Interpretation -->
+    <div id="ls-interpretation"></div>
+  </div>
+
+  <div id="footer-container"></div>
+  <script src="../data/sample-data.js"></script>
+  <script src="../js/charts/chart-manager.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/modules/linear-systems.js"></script>
+</body>
+</html>

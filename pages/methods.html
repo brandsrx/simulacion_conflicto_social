@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Métodos Numéricos | SimNum</title>
+  <meta name="description" content="Resumen de los 14 métodos numéricos implementados en la plataforma de simulación.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <div id="nav-container"></div>
+
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Inicio</a><span>/</span><span>Métodos</span></div>
+    <h1>Métodos Numéricos</h1>
+    <p>14 algoritmos implementados, organizados por categoría, con aplicaciones reales.</p>
+  </div>
+
+  <section class="section">
+    <!-- Linear Systems -->
+    <div style="margin-bottom:3rem">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(99,102,241,0.15);display:flex;align-items:center;justify-content:center;font-size:1.5rem">📐</div>
+        <div><h2 style="font-size:1.3rem;font-weight:800">Sistemas de Ecuaciones Lineales</h2><p style="color:var(--text-secondary);font-size:0.85rem">Resolución de Ax = b con métodos directos e iterativos</p></div>
+      </div>
+      <div class="grid-3">
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-cyan);margin-bottom:0.5rem">Descomposición LU</h3><p style="color:var(--text-secondary);font-size:0.85rem">Método directo que factoriza A = LU. Resuelve sistemas con sustitución hacia adelante y hacia atrás. Complejidad O(n³/3).</p><div class="math-block">A = LU → Ly = b → Ux = y</div></div>
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-cyan);margin-bottom:0.5rem">Método de Jacobi</h3><p style="color:var(--text-secondary);font-size:0.85rem">Método iterativo que actualiza todas las incógnitas simultáneamente usando los valores de la iteración anterior.</p><div class="math-block">xᵢ⁽ᵏ⁺¹⁾ = (bᵢ - Σⱼ≠ᵢ aᵢⱼxⱼ⁽ᵏ⁾) / aᵢᵢ</div></div>
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-cyan);margin-bottom:0.5rem">Gauss-Seidel</h3><p style="color:var(--text-secondary);font-size:0.85rem">Mejora de Jacobi: usa valores actualizados inmediatamente. Converge más rápido para matrices diagonalmente dominantes.</p><div class="math-block">xᵢ⁽ᵏ⁺¹⁾ = (bᵢ - Σⱼ&lt;ᵢ aᵢⱼxⱼ⁽ᵏ⁺¹⁾ - Σⱼ&gt;ᵢ aᵢⱼxⱼ⁽ᵏ⁾) / aᵢᵢ</div></div>
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-cyan);margin-bottom:0.5rem">SOR</h3><p style="color:var(--text-secondary);font-size:0.85rem">Successive Over-Relaxation. Acelera Gauss-Seidel con un factor de relajación ω. Óptimo para 1 &lt; ω &lt; 2.</p><div class="math-block">xᵢ = (1-ω)xᵢ⁽ᵏ⁾ + ω·(GS update)</div></div>
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-cyan);margin-bottom:0.5rem">Gradiente Conjugado</h3><p style="color:var(--text-secondary);font-size:0.85rem">Método óptimo para matrices simétricas definidas positivas. Converge en a lo sumo n iteraciones.</p><div class="math-block">pₖ₊₁ = rₖ₊₁ + βₖpₖ</div></div>
+      </div>
+      <div style="text-align:center;margin-top:1rem"><a href="linear-systems.html" class="btn btn-primary btn-sm">Ir al Módulo →</a></div>
+    </div>
+
+    <!-- Roots -->
+    <div style="margin-bottom:3rem">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(6,182,212,0.15);display:flex;align-items:center;justify-content:center;font-size:1.5rem">🎯</div>
+        <div><h2 style="font-size:1.3rem;font-weight:800">Raíces de Ecuaciones</h2><p style="color:var(--text-secondary);font-size:0.85rem">Encontrar x tal que f(x) = 0</p></div>
+      </div>
+      <div class="grid-3">
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-emerald);margin-bottom:0.5rem">Bisección</h3><p style="color:var(--text-secondary);font-size:0.85rem">Divide el intervalo por la mitad en cada iteración. Convergencia garantizada pero lenta (lineal). Robusto y confiable.</p><div class="math-block">c = (a+b)/2, error ≤ (b-a)/2ⁿ</div></div>
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-emerald);margin-bottom:0.5rem">Newton-Raphson</h3><p style="color:var(--text-secondary);font-size:0.85rem">Usa tangentes para aproximar la raíz. Convergencia cuadrática cerca de la raíz. Requiere la derivada f'(x).</p><div class="math-block">xₙ₊₁ = xₙ - f(xₙ)/f'(xₙ)</div></div>
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-emerald);margin-bottom:0.5rem">Secante</h3><p style="color:var(--text-secondary);font-size:0.85rem">Aproxima la derivada con diferencias finitas. No requiere f'(x). Convergencia superlineal (orden ≈ 1.618).</p><div class="math-block">xₙ₊₁ = xₙ - f(xₙ)·(xₙ-xₙ₋₁)/(f(xₙ)-f(xₙ₋₁))</div></div>
+      </div>
+      <div style="text-align:center;margin-top:1rem"><a href="roots.html" class="btn btn-primary btn-sm">Ir al Módulo →</a></div>
+    </div>
+
+    <!-- Interpolation -->
+    <div style="margin-bottom:3rem">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;font-size:1.5rem">📈</div>
+        <div><h2 style="font-size:1.3rem;font-weight:800">Interpolación</h2><p style="color:var(--text-secondary);font-size:0.85rem">Construir funciones que pasen por puntos dados</p></div>
+      </div>
+      <div class="grid-3">
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-amber);margin-bottom:0.5rem">Lagrange</h3><p style="color:var(--text-secondary);font-size:0.85rem">Construye el polinomio interpolante usando la fórmula de polinomios base de Lagrange. Directo pero costoso para muchos puntos.</p><div class="math-block">P(x) = Σᵢ yᵢ·Lᵢ(x)</div></div>
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-amber);margin-bottom:0.5rem">Newton (Dif. Divididas)</h3><p style="color:var(--text-secondary);font-size:0.85rem">Usa una tabla de diferencias divididas. Eficiente para agregar puntos incrementalmente.</p><div class="math-block">P(x) = f[x₀] + f[x₀,x₁](x-x₀) + ...</div></div>
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-amber);margin-bottom:0.5rem">Splines Cúbicos</h3><p style="color:var(--text-secondary);font-size:0.85rem">Polinomios cúbicos por tramos con continuidad C². Evita oscilaciones de Runge. Ideal para datos reales.</p><div class="math-block">Sᵢ(x) = aᵢ + bᵢ(x-xᵢ) + cᵢ(x-xᵢ)² + dᵢ(x-xᵢ)³</div></div>
+      </div>
+      <div style="text-align:center;margin-top:1rem"><a href="interpolation.html" class="btn btn-primary btn-sm">Ir al Módulo →</a></div>
+    </div>
+
+    <!-- Integration -->
+    <div style="margin-bottom:3rem">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;font-size:1.5rem">∫</div>
+        <div><h2 style="font-size:1.3rem;font-weight:800">Integración Numérica</h2><p style="color:var(--text-secondary);font-size:0.85rem">Calcular ∫f(x)dx numéricamente</p></div>
+      </div>
+      <div class="grid-3">
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-rose);margin-bottom:0.5rem">Regla del Trapecio</h3><p style="color:var(--text-secondary);font-size:0.85rem">Aproxima el área con trapecios. Simple y robusto. Error O(h²).</p><div class="math-block">∫ ≈ h/2 · [f(x₀) + 2f(x₁) + ... + f(xₙ)]</div></div>
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-rose);margin-bottom:0.5rem">Simpson 1/3</h3><p style="color:var(--text-secondary);font-size:0.85rem">Usa parábolas para aproximar. Requiere número par de subintervalos. Error O(h⁴).</p><div class="math-block">∫ ≈ h/3 · [f(x₀) + 4f(x₁) + 2f(x₂) + ...]</div></div>
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-rose);margin-bottom:0.5rem">Simpson 3/8</h3><p style="color:var(--text-secondary);font-size:0.85rem">Usa polinomios cúbicos. Requiere subintervalos múltiplos de 3. Error O(h⁴).</p><div class="math-block">∫ ≈ 3h/8 · [f(x₀) + 3f(x₁) + 3f(x₂) + 2f(x₃) + ...]</div></div>
+      </div>
+      <div style="text-align:center;margin-top:1rem"><a href="integration.html" class="btn btn-primary btn-sm">Ir al Módulo →</a></div>
+    </div>
+
+    <!-- Differential Equations -->
+    <div>
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(168,85,247,0.15);display:flex;align-items:center;justify-content:center;font-size:1.5rem">δ</div>
+        <div><h2 style="font-size:1.3rem;font-weight:800">Ecuaciones Diferenciales</h2><p style="color:var(--text-secondary);font-size:0.85rem">Resolver dy/dt = f(t,y) numéricamente</p></div>
+      </div>
+      <div class="grid-3">
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-indigo);margin-bottom:0.5rem">Euler</h3><p style="color:var(--text-secondary);font-size:0.85rem">El método más simple. Usa la pendiente en el punto actual. Error O(h). Puede ser inestable con pasos grandes.</p><div class="math-block">yₙ₊₁ = yₙ + h·f(tₙ, yₙ)</div></div>
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-indigo);margin-bottom:0.5rem">Heun (Euler Mejorado)</h3><p style="color:var(--text-secondary);font-size:0.85rem">Predictor-corrector: promedia pendientes del inicio y fin del intervalo. Error O(h²).</p><div class="math-block">yₙ₊₁ = yₙ + h/2·[f(tₙ,yₙ) + f(tₙ₊₁,ỹₙ₊₁)]</div></div>
+        <div class="glass-card"><h3 style="font-weight:700;color:var(--accent-indigo);margin-bottom:0.5rem">Runge-Kutta 4</h3><p style="color:var(--text-secondary);font-size:0.85rem">El estándar de oro. Usa 4 evaluaciones de f por paso para lograr error O(h⁴). Excelente balance precisión-costo.</p><div class="math-block">yₙ₊₁ = yₙ + h/6·(k₁ + 2k₂ + 2k₃ + k₄)</div></div>
+      </div>
+      <div style="text-align:center;margin-top:1rem"><a href="differential-equations.html" class="btn btn-primary btn-sm">Ir al Módulo →</a></div>
+    </div>
+  </section>
+
+  <div id="footer-container"></div>
+  <script src="../js/main.js"></script>
+</body>
+</html>

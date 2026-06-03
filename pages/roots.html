@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raíces de Ecuaciones | SimNum</title>
+  <meta name="description" content="Bisección, Newton-Raphson y Secante para determinar umbrales críticos de crisis.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <div id="nav-container"></div>
+
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Inicio</a><span>/</span><a href="methods.html">Métodos</a><span>/</span><span>Raíces</span></div>
+    <h1>Raíces de Ecuaciones</h1>
+    <p>Determinación de umbrales críticos en reservas, precios, combustible y demanda.</p>
+  </div>
+
+  <div id="roots-module" class="section">
+    <div class="method-explanation">
+      <h3>Fundamento Matemático</h3>
+      <p>Encontrar la raíz x* de f(x) = 0 permite determinar puntos críticos donde el sistema cambia de comportamiento: el día en que las reservas se agotan, el precio que supera la capacidad adquisitiva, o la demanda que colapsa la cadena de suministro.</p>
+    </div>
+
+    <!-- Scenario: Critical Thresholds -->
+    <div class="scenario-box">
+      <h3>Escenario E: Umbrales Críticos de Abastecimiento</h3>
+      <p>Cada función modela un aspecto diferente de la crisis. La raíz indica el punto exacto de quiebre del sistema.</p>
+    </div>
+
+    <!-- Threshold Selection -->
+    <div style="margin-bottom:1.5rem">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem">Seleccionar Umbral</h3>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm threshold-btn active" data-func="reserve">📦 Punto Crítico de Reservas</button>
+        <button class="btn btn-secondary btn-sm threshold-btn" data-func="fuel">⛽ Tasa de Reposición</button>
+        <button class="btn btn-secondary btn-sm threshold-btn" data-func="price">💰 Umbral de Precio</button>
+        <button class="btn btn-secondary btn-sm threshold-btn" data-func="demand">📊 Demanda Máxima</button>
+      </div>
+    </div>
+    <p id="roots-func-desc" style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1rem">Determina el momento en que las reservas alcanzan un nivel crítico</p>
+
+    <!-- Configuration -->
+    <div class="grid-2" style="margin-bottom:1.5rem">
+      <div class="glass-card">
+        <h3 style="font-weight:700;margin-bottom:1rem">Función y Parámetros</h3>
+        <div class="form-group">
+          <label class="form-label">Expresión f(x)</label>
+          <input type="text" id="roots-func-expr" class="form-input mono" value="R(t) = 10000 * e^(-0.08t) + 200t - 5000">
+        </div>
+        <div class="grid-2" style="gap:0.75rem">
+          <div class="form-group">
+            <label class="form-label">Intervalo a</label>
+            <input type="number" id="roots-interval-a" value="0" step="any" class="form-input mono">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Intervalo b / x₁</label>
+            <input type="number" id="roots-interval-b" value="60" step="any" class="form-input mono">
+          </div>
+          <div class="form-group">
+            <label class="form-label">x₀ (Newton)</label>
+            <input type="number" id="roots-x0" value="30" step="any" class="form-input mono">
+          </div>
+        </div>
+      </div>
+      <div class="glass-card">
+        <h3 style="font-weight:700;margin-bottom:1rem">Configuración del Método</h3>
+        <div class="form-group">
+          <label class="form-label">Método</label>
+          <select id="roots-method" class="form-select">
+            <option value="bisection">Bisección</option>
+            <option value="newton" selected>Newton-Raphson</option>
+            <option value="secant">Secante</option>
+          </select>
+        </div>
+        <div class="grid-2" style="gap:0.75rem">
+          <div class="form-group">
+            <label class="form-label">Tolerancia</label>
+            <input type="number" id="roots-tolerance" value="0.000001" step="any" class="form-input mono">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Máx. Iteraciones</label>
+            <input type="number" id="roots-max-iter" value="100" class="form-input mono">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:0.75rem;margin-bottom:2rem;flex-wrap:wrap">
+      <button id="roots-solve-btn" class="btn btn-primary">▶ Encontrar Raíz</button>
+      <button id="roots-compare-btn" class="btn btn-secondary">📊 Comparar Métodos</button>
+    </div>
+
+    <!-- Results -->
+    <div id="roots-results" style="display:none;margin-bottom:2rem"></div>
+
+    <!-- Charts -->
+    <div class="grid-2" style="margin-bottom:2rem">
+      <div class="chart-container"><canvas id="roots-func-chart" height="300"></canvas></div>
+      <div class="chart-container"><canvas id="roots-conv-chart" height="300"></canvas></div>
+    </div>
+
+    <!-- Interpretation -->
+    <div id="roots-interpretation"></div>
+  </div>
+
+  <div id="footer-container"></div>
+  <script src="../data/sample-data.js"></script>
+  <script src="../js/charts/chart-manager.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/modules/roots.js"></script>
+</body>
+</html>

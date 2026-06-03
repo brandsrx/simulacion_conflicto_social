@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ecuaciones Diferenciales | SimNum</title>
+  <meta name="description" content="Euler, Heun y RK4 para simular combustible y descontento social (modelo N-M-D).">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <div id="nav-container"></div>
+
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Inicio</a><span>/</span><a href="methods.html">Métodos</a><span>/</span><span>Ec. Diferenciales</span></div>
+    <h1>Ecuaciones Diferenciales Ordinarias</h1>
+    <p>Simulación temporal de agotamiento de combustible y difusión del descontento social.</p>
+  </div>
+
+  <div id="diffeq-module" class="section">
+    <div class="method-explanation">
+      <h3>Fundamento Matemático</h3>
+      <p>Las EDO modelan cómo las variables cambian en el tiempo: dy/dt = f(t,y). Los métodos numéricos permiten simular paso a paso la evolución de sistemas que no tienen solución analítica cerrada.</p>
+      <div class="grid-3" style="margin-top:1rem">
+        <div class="math-block"><strong>Euler:</strong><br>yₙ₊₁ = yₙ + h·f(tₙ, yₙ)<br>Error: O(h)</div>
+        <div class="math-block"><strong>Heun:</strong><br>yₙ₊₁ = yₙ + h/2·[f(tₙ,yₙ)+f(tₙ₊₁,ỹ)]<br>Error: O(h²)</div>
+        <div class="math-block"><strong>RK4:</strong><br>yₙ₊₁ = yₙ + h/6·(k₁+2k₂+2k₃+k₄)<br>Error: O(h⁴)</div>
+      </div>
+    </div>
+
+    <!-- Scenario Selection -->
+    <div style="margin-bottom:1.5rem">
+      <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem">Selección de Escenario</h3>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem">
+        <button class="btn btn-primary btn-sm deq-scenario-tab active" data-scenario="scenario-fuel">⛽ Escenario B: Vaciado de Reservas</button>
+        <button class="btn btn-secondary btn-sm deq-scenario-tab" data-scenario="scenario-social">⚠️ Escenario G: Descontento Social (N-M-D)</button>
+      </div>
+
+      <div class="deq-scenario-desc active" id="scenario-fuel">
+        <div class="scenario-box">
+          <h3>Escenario B: Vaciado Crítico de Reservas de Carburantes</h3>
+          <p>Las reservas R(t) disminuyen según: <strong>R'(t) = entrada - α·R·(1 + β·sin(t/10))</strong>, donde la entrada está reducida durante la crisis y el consumo depende del nivel de reservas actual.</p>
+          <div class="math-block">R'(t) = entrada − consumoBase × R(t) × (1 + 0.02 × sin(t/10))</div>
+        </div>
+      </div>
+      <div class="deq-scenario-desc" id="scenario-social">
+        <div class="scenario-box">
+          <h3>Escenario G: Modelo de Difusión del Descontento Social</h3>
+          <p>Modelo con 3 poblaciones: <strong>N(t)</strong> = ciudadanos neutrales, <strong>M(t)</strong> = manifestantes activos, <strong>D(t)</strong> = mediadores/actores de diálogo.</p>
+          <div class="math-block">N'(t) = −a·N·M + b·D &nbsp;&nbsp;|&nbsp;&nbsp; M'(t) = a·N·M − c·M·D &nbsp;&nbsp;|&nbsp;&nbsp; D'(t) = k·M − r·D</div>
+          <p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-muted)">a = influencia del descontento · b = retorno a neutralidad · c = efectividad del diálogo · k = reacción institucional · r = desgaste de mediadores</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuration -->
+    <div class="grid-2" style="margin-bottom:1.5rem">
+      <div class="glass-card">
+        <h3 style="font-weight:700;margin-bottom:1rem">Parámetros del Modelo</h3>
+
+        <!-- FUEL PARAMS -->
+        <div id="deq-params-fuel">
+          <div class="form-group">
+            <label class="form-label">Reservas Iniciales R₀ (litros)</label>
+            <input type="number" id="deq-fuel-R0" value="10000" step="any" class="form-input mono">
+          </div>
+          <div class="grid-2" style="gap:0.75rem">
+            <div class="form-group">
+              <label class="form-label">Entrada (litros/día)</label>
+              <input type="number" id="deq-fuel-entrada" value="200" step="any" class="form-input mono">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tasa de consumo (α)</label>
+              <input type="number" id="deq-fuel-consumo" value="0.08" step="any" class="form-input mono">
+            </div>
+          </div>
+          <h4 style="font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin:1rem 0 0.5rem">¿QUÉ PASA SI...?</h4>
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm whatif-btn" data-whatif="consumoAlto">📈 Consumo +50%</button>
+            <button class="btn btn-secondary btn-sm whatif-btn" data-whatif="consumoBajo">📉 Racionamiento</button>
+            <button class="btn btn-secondary btn-sm whatif-btn" data-whatif="entradaReducida">⬇️ Entrada -50%</button>
+            <button class="btn btn-secondary btn-sm whatif-btn" data-whatif="entradaCero">🚫 Sin entrada</button>
+            <button class="btn btn-secondary btn-sm whatif-btn" data-whatif="entradaAlta">⬆️ Entrada +150%</button>
+          </div>
+        </div>
+
+        <!-- SOCIAL PARAMS (N-M-D) -->
+        <div id="deq-params-social" style="display:none">
+          <div class="grid-3" style="gap:0.75rem">
+            <div class="form-group">
+              <label class="form-label">N₀ (Neutrales)</label>
+              <input type="number" id="deq-social-N0" value="0.85" step="0.01" class="form-input mono">
+            </div>
+            <div class="form-group">
+              <label class="form-label">M₀ (Manifestantes)</label>
+              <input type="number" id="deq-social-M0" value="0.10" step="0.01" class="form-input mono">
+            </div>
+            <div class="form-group">
+              <label class="form-label">D₀ (Mediadores)</label>
+              <input type="number" id="deq-social-D0" value="0.05" step="0.01" class="form-input mono">
+            </div>
+          </div>
+          <div class="grid-5" style="gap:0.5rem;margin-top:0.5rem">
+            <div class="form-group">
+              <label class="form-label">a (influencia)</label>
+              <input type="number" id="deq-social-a" value="0.3" step="0.01" class="form-input mono">
+            </div>
+            <div class="form-group">
+              <label class="form-label">b (retorno)</label>
+              <input type="number" id="deq-social-b" value="0.05" step="0.01" class="form-input mono">
+            </div>
+            <div class="form-group">
+              <label class="form-label">c (diálogo)</label>
+              <input type="number" id="deq-social-c" value="0.1" step="0.01" class="form-input mono">
+            </div>
+            <div class="form-group">
+              <label class="form-label">k (instituc.)</label>
+              <input type="number" id="deq-social-k" value="0.08" step="0.01" class="form-input mono">
+            </div>
+            <div class="form-group">
+              <label class="form-label">r (desgaste)</label>
+              <input type="number" id="deq-social-r" value="0.03" step="0.01" class="form-input mono">
+            </div>
+          </div>
+          <h4 style="font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin:1rem 0 0.5rem">¿QUÉ PASA SI...?</h4>
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm whatif-btn" data-whatif="sinMediadores">🚫 Sin mediadores</button>
+            <button class="btn btn-secondary btn-sm whatif-btn" data-whatif="mejorDialogo">🤝 Diálogo efectivo</button>
+            <button class="btn btn-secondary btn-sm whatif-btn" data-whatif="masDescontento">😡 Alto descontento</button>
+            <button class="btn btn-secondary btn-sm whatif-btn" data-whatif="masMediadores">🏛️ Más mediadores</button>
+            <button class="btn btn-secondary btn-sm whatif-btn" data-whatif="conflictoMasivo">🔥 Conflicto masivo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <h3 style="font-weight:700;margin-bottom:1rem">Configuración de Simulación</h3>
+        <div class="form-group">
+          <label class="form-label">Método</label>
+          <select id="deq-method" class="form-select">
+            <option value="euler">Euler</option>
+            <option value="heun">Heun (Euler Mejorado)</option>
+            <option value="rk4" selected>Runge-Kutta 4</option>
+            <option value="compare">📊 Comparar los 3 métodos</option>
+          </select>
+        </div>
+        <div class="grid-2" style="gap:0.75rem">
+          <div class="form-group">
+            <label class="form-label">Tiempo Final (días)</label>
+            <input type="number" id="deq-tEnd" value="60" class="form-input mono">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Paso h (días)</label>
+            <input type="number" id="deq-h" value="1" step="any" class="form-input mono">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:0.75rem;margin-bottom:2rem;flex-wrap:wrap">
+      <button id="deq-solve-btn" class="btn btn-primary">▶ Simular</button>
+    </div>
+
+    <div id="deq-results" style="display:none;margin-bottom:2rem"></div>
+
+    <div class="grid-2" style="margin-bottom:2rem">
+      <div class="chart-container"><canvas id="deq-evolution-chart" height="300"></canvas></div>
+      <div class="chart-container"><canvas id="deq-stability-chart" height="300"></canvas></div>
+    </div>
+
+    <div id="deq-interpretation"></div>
+  </div>
+
+  <div id="footer-container"></div>
+  <script src="../data/sample-data.js"></script>
+  <script src="../js/charts/chart-manager.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/modules/differential-equations.js"></script>
+</body>
+</html>

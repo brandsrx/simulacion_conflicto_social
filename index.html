@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimNum — Simulación Numérica de Crisis</title>
+  <meta name="description" content="Simulación numérica de abastecimiento, precios y conflicto social en contexto de crisis. Proyecto final de Métodos Numéricos.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <div id="nav-container"></div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="hero-badge">📐 Proyecto Final — Métodos Numéricos 2025</div>
+      <h1 class="hero-title">
+        Simulación Numérica de<br>
+        <span class="gradient-text">Abastecimiento, Precios y Conflicto Social</span><br>
+        en Contexto de Crisis
+      </h1>
+      <p class="hero-subtitle">
+        Aplicación de métodos numéricos para modelar escenarios de escasez de combustible,
+        cadenas de suministro alimentario, inflación de precios y dinámica del descontento social.
+      </p>
+      <div class="hero-actions">
+        <a href="./pages/methods.html" class="btn btn-primary">Explorar Módulos →</a>
+        <a href="./pages/about.html" class="btn btn-secondary">Contexto del Proyecto</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="section-sm">
+    <div class="grid-5">
+      <div class="stat-card"><div class="stat-value">5</div><div class="stat-label">Módulos de Simulación</div></div>
+      <div class="stat-card"><div class="stat-value">14</div><div class="stat-label">Métodos Numéricos</div></div>
+      <div class="stat-card"><div class="stat-value">7</div><div class="stat-label">Escenarios de Crisis</div></div>
+      <div class="stat-card"><div class="stat-value">∞</div><div class="stat-label">Simulaciones Interactivas</div></div>
+      <div class="stat-card"><div class="stat-value">3</div><div class="stat-label">Integrantes</div></div>
+    </div>
+  </section>
+
+  <!-- PROBLEM CONTEXT -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-badge">Contexto</div>
+      <h2 class="section-title">El Problema: Crisis Multidimensional</h2>
+      <p class="section-desc">Un escenario de crisis genera efectos en cadena que afectan múltiples dimensiones de la sociedad.</p>
+    </div>
+    <div class="grid-3">
+      <div class="glass-card">
+        <div style="font-size:2rem;margin-bottom:0.75rem">⛽</div>
+        <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:0.5rem">Escasez de Combustible</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem">Las reservas de combustible disminuyen exponencialmente cuando la oferta se interrumpe. Las estaciones de servicio vacías generan pánico y acaparamiento.</p>
+      </div>
+      <div class="glass-card">
+        <div style="font-size:2rem;margin-bottom:0.75rem">🚛</div>
+        <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:0.5rem">Dificultades de Transporte</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem">Sin combustible, las redes de transporte colapsan. La distribución de alimentos y suministros se fragmenta, afectando a las ciudades más alejadas.</p>
+      </div>
+      <div class="glass-card">
+        <div style="font-size:2rem;margin-bottom:0.75rem">🛒</div>
+        <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:0.5rem">Desabastecimiento Alimentario</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem">La interrupción del transporte genera escasez de alimentos básicos. Los precios se disparan siguiendo curvas exponenciales que erosionan el poder adquisitivo.</p>
+      </div>
+      <div class="glass-card">
+        <div style="font-size:2rem;margin-bottom:0.75rem">📈</div>
+        <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:0.5rem">Inflación Acelerada</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem">Los precios de la canasta básica crecen día a día. La integración numérica nos permite calcular el costo acumulado real para las familias.</p>
+      </div>
+      <div class="glass-card">
+        <div style="font-size:2rem;margin-bottom:0.75rem">📢</div>
+        <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:0.5rem">Rumores y Compras de Pánico</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem">La desinformación se propaga como un virus. Los rumores generan compras de pánico que agravan la escasez real, creando un ciclo vicioso.</p>
+      </div>
+      <div class="glass-card">
+        <div style="font-size:2rem;margin-bottom:0.75rem">⚠️</div>
+        <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:0.5rem">Conflicto Social</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem">El descontento se difunde siguiendo modelos epidemiológicos. Comprender esta dinámica es esencial para prevenir escaladas de conflicto.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- OBJECTIVES -->
+  <section class="section" style="background:rgba(99,102,241,0.03)">
+    <div class="section-header">
+      <div class="section-badge">Objetivos</div>
+      <h2 class="section-title">¿Por Qué Simular Numéricamente?</h2>
+    </div>
+    <div class="grid-3">
+      <div class="glass-card" style="text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:1rem">🧮</div>
+        <h3 style="font-weight:700;margin-bottom:0.5rem">Métodos Numéricos Aplicados</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem">Los problemas reales rara vez tienen solución analítica exacta. Los métodos numéricos nos permiten obtener aproximaciones precisas y útiles para la toma de decisiones.</p>
+      </div>
+      <div class="glass-card" style="text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:1rem">📊</div>
+        <h3 style="font-weight:700;margin-bottom:0.5rem">Simulación como Herramienta</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem">Las simulaciones permiten explorar escenarios hipotéticos sin riesgo real. Podemos probar políticas, evaluar umbrales críticos y anticipar consecuencias.</p>
+      </div>
+      <div class="glass-card" style="text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:1rem">🎯</div>
+        <h3 style="font-weight:700;margin-bottom:0.5rem">Modelos para Decisiones</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem">Los modelos matemáticos transforman datos en información accionable. Un gobernante puede saber CUÁNDO actuar y QUÉ hacer basándose en simulaciones cuantitativas.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- METHODS OVERVIEW -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-badge">Módulos</div>
+      <h2 class="section-title">Métodos Numéricos Implementados</h2>
+      <p class="section-desc">Cada módulo aplica métodos numéricos específicos a escenarios reales de crisis.</p>
+    </div>
+    <div class="grid-3">
+      <a href="./pages/linear-systems.html" class="method-card">
+        <div class="card-icon">📐</div>
+        <h3>Sistemas de Ecuaciones Lineales</h3>
+        <p>LU, Jacobi, Gauss-Seidel, SOR y Gradiente Conjugado aplicados a redes de distribución y propagación de rumores.</p>
+        <div style="margin-top:1rem"><span class="badge badge-cyan">5 métodos</span> <span class="badge badge-emerald">2 escenarios</span></div>
+      </a>
+      <a href="./pages/roots.html" class="method-card">
+        <div class="card-icon">🎯</div>
+        <h3>Raíces de Ecuaciones</h3>
+        <p>Bisección, Newton-Raphson y Secante para determinar umbrales críticos en reservas, precios y demanda.</p>
+        <div style="margin-top:1rem"><span class="badge badge-cyan">3 métodos</span> <span class="badge badge-amber">4 umbrales</span></div>
+      </a>
+      <a href="./pages/interpolation.html" class="method-card">
+        <div class="card-icon">📈</div>
+        <h3>Interpolación</h3>
+        <p>Lagrange, Newton y Splines Cúbicos para reconstruir curvas de precios de alimentos y estimar valores faltantes.</p>
+        <div style="margin-top:1rem"><span class="badge badge-cyan">3 métodos</span> <span class="badge badge-emerald">4 productos</span></div>
+      </a>
+      <a href="./pages/integration.html" class="method-card">
+        <div class="card-icon">∫</div>
+        <h3>Integración Numérica</h3>
+        <p>Trapecios, Simpson 1/3 y Simpson 3/8 para calcular el costo acumulado de la canasta familiar durante la crisis.</p>
+        <div style="margin-top:1rem"><span class="badge badge-cyan">3 métodos</span> <span class="badge badge-rose">Impacto económico</span></div>
+      </a>
+      <a href="./pages/differential-equations.html" class="method-card">
+        <div class="card-icon">δ</div>
+        <h3>Ecuaciones Diferenciales</h3>
+        <p>Euler, Heun y Runge-Kutta 4 para simular agotamiento de combustible y difusión del descontento social (modelo SIR).</p>
+        <div style="margin-top:1rem"><span class="badge badge-cyan">3 métodos</span> <span class="badge badge-emerald">2 escenarios</span></div>
+      </a>
+      <a href="./pages/conclusions.html" class="method-card">
+        <div class="card-icon">📋</div>
+        <h3>Conclusiones</h3>
+        <p>Análisis integral de los resultados, lecciones aprendidas y recomendaciones basadas en las simulaciones realizadas.</p>
+        <div style="margin-top:1rem"><span class="badge badge-amber">Síntesis</span></div>
+      </a>
+    </div>
+  </section>
+
+  <div id="footer-container"></div>
+  <script src="./js/main.js"></script>
+</body>
+</html>

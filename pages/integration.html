@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Integración Numérica | SimNum</title>
+  <meta name="description" content="Trapecios, Simpson 1/3 y Simpson 3/8 para calcular costos acumulados familiares.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <div id="nav-container"></div>
+
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Inicio</a><span>/</span><a href="methods.html">Métodos</a><span>/</span><span>Integración</span></div>
+    <h1>Integración Numérica</h1>
+    <p>Cálculo del costo acumulado de la canasta familiar durante la crisis.</p>
+  </div>
+
+  <div id="integ-module" class="section">
+    <div class="method-explanation">
+      <h3>Fundamento Matemático</h3>
+      <p>La integral ∫f(x)dx calcula el área bajo una curva. En nuestro contexto, integrar la curva de precios diarios nos da el costo total acumulado que una familia debe pagar por su canasta básica durante el período de crisis.</p>
+      <div class="math-block">Costo Total = ∫₁³⁰ P(t) dt, donde P(t) = precio diario de la canasta</div>
+    </div>
+
+    <div class="scenario-box">
+      <h3>Escenario D: Costos Acumulados de la Canasta Familiar</h3>
+      <p>Una familia promedio enfrenta precios crecientes día a día. El precio normal de la canasta es de 8.50 Bs/día. Durante la crisis, este precio se incrementa progresivamente. La integración numérica cuantifica el impacto total.</p>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:1.5rem">
+      <div class="glass-card">
+        <h3 style="font-weight:700;margin-bottom:1rem">Datos de Precios Diarios</h3>
+        <p style="color:var(--text-secondary);font-size:0.8rem;margin-bottom:0.5rem">Formato: día,precio (uno por línea)</p>
+        <textarea id="integ-data-input" class="form-textarea mono" rows="10" style="resize:vertical"></textarea>
+        <button id="integ-load-sample" class="btn btn-secondary btn-sm" style="margin-top:0.75rem">📥 Cargar Datos de Ejemplo</button>
+      </div>
+      <div class="glass-card">
+        <h3 style="font-weight:700;margin-bottom:1rem">Información del Escenario</h3>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div class="result-card">
+            <h4>Precio Normal Diario</h4>
+            <div class="value cyan">8.50 Bs</div>
+          </div>
+          <div class="result-card">
+            <h4>Productos de la Canasta</h4>
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.25rem">
+              <span class="badge badge-cyan">Arroz</span>
+              <span class="badge badge-emerald">Harina</span>
+              <span class="badge badge-amber">Aceite</span>
+              <span class="badge badge-cyan">Leche</span>
+              <span class="badge badge-rose">Carne</span>
+              <span class="badge badge-emerald">Verduras</span>
+            </div>
+          </div>
+          <div>
+            <h4 style="font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.5rem">MÉTODOS APLICADOS</h4>
+            <div style="display:flex;flex-direction:column;gap:0.3rem">
+              <span class="badge badge-cyan" style="width:fit-content">Regla del Trapecio — O(h²)</span>
+              <span class="badge badge-emerald" style="width:fit-content">Simpson 1/3 — O(h⁴)</span>
+              <span class="badge badge-amber" style="width:fit-content">Simpson 3/8 — O(h⁴)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:0.75rem;margin-bottom:2rem;flex-wrap:wrap">
+      <button id="integ-solve-btn" class="btn btn-primary">▶ Calcular Costo Acumulado</button>
+    </div>
+
+    <!-- Results -->
+    <div id="integ-results" style="display:none;margin-bottom:2rem"></div>
+
+    <!-- Charts -->
+    <div class="grid-2" style="margin-bottom:2rem">
+      <div class="chart-container"><canvas id="integ-area-chart" height="300"></canvas></div>
+      <div class="chart-container"><canvas id="integ-cum-chart" height="300"></canvas></div>
+    </div>
+
+    <!-- Interpretation -->
+    <div id="integ-interpretation"></div>
+  </div>
+
+  <div id="footer-container"></div>
+  <script src="../data/sample-data.js"></script>
+  <script src="../js/charts/chart-manager.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/modules/integration.js"></script>
+</body>
+</html>

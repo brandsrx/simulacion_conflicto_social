@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interpolación | SimNum</title>
+  <meta name="description" content="Lagrange, Newton y Splines Cúbicos para curvas de precios de alimentos.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <div id="nav-container"></div>
+
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Inicio</a><span>/</span><a href="methods.html">Métodos</a><span>/</span><span>Interpolación</span></div>
+    <h1>Interpolación</h1>
+    <p>Reconstrucción de curvas de precios de alimentos con datos incompletos.</p>
+  </div>
+
+  <div id="interp-module" class="section">
+    <div class="method-explanation">
+      <h3>Fundamento Matemático</h3>
+      <p>La interpolación construye una función que pasa exactamente por los puntos de datos conocidos, permitiendo estimar valores intermedios. En una crisis, los datos de precios son incompletos: la interpolación llena los vacíos y permite predecir tendencias a corto plazo.</p>
+    </div>
+
+    <div class="scenario-box">
+      <h3>Escenario C: Curvas de Precios de Alimentos</h3>
+      <p>Durante una crisis, los precios de alimentos básicos (arroz, harina, aceite, leche) se registran periódicamente pero no todos los días. La interpolación permite reconstruir la curva completa y estimar precios para los días sin observaciones.</p>
+    </div>
+
+    <!-- Food item selection -->
+    <div style="margin-bottom:1.5rem">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem">Producto Alimenticio</h3>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm food-item-btn active" data-item="arroz">🍚 Arroz</button>
+        <button class="btn btn-secondary btn-sm food-item-btn" data-item="harina">🌾 Harina</button>
+        <button class="btn btn-secondary btn-sm food-item-btn" data-item="aceite">🫒 Aceite</button>
+        <button class="btn btn-secondary btn-sm food-item-btn" data-item="leche">🥛 Leche</button>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:1.5rem">
+      <div class="glass-card">
+        <h3 style="font-weight:700;margin-bottom:1rem">Datos de <span id="interp-item-name">Arroz (kg)</span></h3>
+        <p style="color:var(--text-secondary);font-size:0.8rem;margin-bottom:0.5rem">Formato: día,precio (uno por línea)</p>
+        <textarea id="interp-data-input" class="form-textarea mono" rows="8" style="resize:vertical"></textarea>
+      </div>
+      <div class="glass-card">
+        <h3 style="font-weight:700;margin-bottom:1rem">Evaluación</h3>
+        <div class="form-group">
+          <label class="form-label">Evaluar en día x =</label>
+          <input type="number" id="interp-eval-x" value="12" step="any" class="form-input mono">
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.8rem;margin-top:0.5rem">Ingrese un día no presente en los datos para estimar su precio usando los tres métodos de interpolación.</p>
+        <div style="margin-top:1rem">
+          <h4 style="font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.5rem">MÉTODOS APLICADOS</h4>
+          <div style="display:flex;flex-direction:column;gap:0.4rem">
+            <span class="badge badge-cyan" style="width:fit-content">Lagrange</span>
+            <span class="badge badge-emerald" style="width:fit-content">Newton (Diferencias Divididas)</span>
+            <span class="badge badge-amber" style="width:fit-content">Splines Cúbicos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:0.75rem;margin-bottom:2rem;flex-wrap:wrap">
+      <button id="interp-solve-btn" class="btn btn-primary">▶ Interpolar</button>
+    </div>
+
+    <!-- Results -->
+    <div id="interp-results" style="display:none;margin-bottom:2rem"></div>
+
+    <!-- Charts -->
+    <div class="grid-2" style="margin-bottom:2rem">
+      <div class="chart-container"><canvas id="interp-main-chart" height="300"></canvas></div>
+      <div class="chart-container"><canvas id="interp-error-chart" height="300"></canvas></div>
+    </div>
+
+    <!-- Interpretation -->
+    <div id="interp-interpretation"></div>
+  </div>
+
+  <div id="footer-container"></div>
+  <script src="../data/sample-data.js"></script>
+  <script src="../js/charts/chart-manager.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/modules/interpolation.js"></script>
+</body>
+</html>
