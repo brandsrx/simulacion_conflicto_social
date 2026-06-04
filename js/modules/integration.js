@@ -129,7 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try { s38Result = Integration.simpson38(xData, yData); } catch (e) { }
 
     // Results
-    const normalCost = familyData.normalDaily * xData.length;
+const normalPrice = familyData.normalDailyPrice;
+const normalCost = normalPrice * xData.length;
     let html = '<div class="grid-4" style="margin-bottom:1.5rem">';
     html += `<div class="result-card"><h4>Trapecios</h4><div class="value cyan">${Utils.formatNum(trapResult.result, 2)} Bs</div></div>`;
     html += `<div class="result-card"><h4>Simpson 1/3</h4><div class="value emerald">${s13Result ? Utils.formatNum(s13Result.result, 2) + ' Bs' : 'N/A'}</div></div>`;
@@ -163,13 +164,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let weekCum = 0;
     for (let w = 0; w < Math.ceil(xData.length / weekSize); w++) {
       const start = w * weekSize;
-      const end = Math.min(start + weekSize, xData.length);
+      const end = Math.min(start + weekSize + 1, xData.length);
       const weekX = xData.slice(start, end);
       const weekY = yData.slice(start, end);
       if (weekX.length >= 2) {
         const weekCost = Integration.trapezoidal(weekX, weekY).result;
         weekCum += weekCost;
-        const normalWeek = familyData.normalDaily * (end - start);
+        const normalWeek = familyData.normalDailyPrice * (end - start);
         weeklyRows.push([
           `Semana ${w + 1}`,
           `Día ${start + 1} - ${end}`,
@@ -194,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
     Utils.createTable(['#', 'Intervalo', 'f(a)', 'f(b)', 'Área', 'Acumulado'], detailRows, 'integ-detail-table');
 
     // Charts
-    drawIntegrationCharts(xData, yData, trapResult);
+    drawIntegrationCharts(xData, yData, trapResult, normalPrice);
 
     // Interpretation
     const interpDiv = document.getElementById('integ-interpretation');
@@ -209,11 +210,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  function drawIntegrationCharts(xData, yData, trapResult) {
+  function drawIntegrationCharts(xData, yData, trapResult, normalPrice) {
     // Area under curve
     ChartManager.createLine('integ-area-chart', xData.map(x => `Día ${x}`), [
       { label: 'Precio diario (Bs)', data: yData, borderColor: '#06b6d4', fill: true, backgroundColor: 'rgba(6,182,212,0.15)', tension: 0.3 },
-      { label: 'Precio normal', data: new Array(xData.length).fill(familyData.normalDaily), borderColor: '#f43f5e', borderDash: [5, 5], pointRadius: 0 }
+{
+  label: 'Precio normal',
+  data: new Array(xData.length).fill(normalPrice),
+  borderColor: '#f43f5e',
+  borderDash: [5, 5],
+  pointRadius: 0
+}
     ], {
       plugins: { title: { display: true, text: 'Área Bajo la Curva — Costo Acumulado', color: '#f1f5f9', font: { size: 14, family: 'Inter' } } },
       scales: { y: { title: { display: true, text: 'Precio (Bs)', color: '#94a3b8' } } }
@@ -222,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cumulative chart
     const cumLabels = trapResult.partials.map(p => `Día ${p.x1}`);
     const cumData = trapResult.partials.map(p => p.cumulative);
-    const normalCum = trapResult.partials.map((p, i) => familyData.normalDaily * (i + 1));
+    const normalCum = trapResult.partials.map((p, i) => normalPrice * (i + 1));
     ChartManager.createLine('integ-cum-chart', cumLabels, [
       { label: 'Costo acumulado (crisis)', data: cumData, borderColor: '#f59e0b', fill: true, backgroundColor: 'rgba(245,158,11,0.1)' },
       { label: 'Costo acumulado (normal)', data: normalCum, borderColor: '#10b981', borderDash: [5, 5] }

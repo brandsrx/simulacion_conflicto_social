@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // M'(t) =  a*N*M - c*M*D
       // D'(t) =  k*M   - r*D
       const fNMD = (t, y) => {
-        const N = Math.max(0, y[0]), M = Math.max(0, y[1]), D = Math.max(0, y[2]);
+      const N = y[0], M = y[1], D = y[2];
         return [
           -a * N * M + b * D,
            a * N * M - c * M * D,
@@ -274,85 +274,182 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ---- SOCIAL RESULTS (N-M-D Model) ----
-  function displaySocialResults(results, h, tEnd, params) {
+  // ---- SOCIAL RESULTS (N-M-D Model) ----
+// ---- SOCIAL RESULTS (N-M-D Model) ----
+function displaySocialResults(results, h, tEnd, params) {
     const mNames = { euler: 'Euler', heun: 'Heun', rk4: 'Runge-Kutta 4' };
     const keys = Object.keys(results);
     const rk = results[keys[0]];
     const last = rk[rk.length - 1];
 
-    // Peak manifestantes
-    const peakM = Math.max(...rk.map(s => s.y[1]));
-    const peakDay = rk.find(s => Math.abs(s.y[1] - peakM) < 1e-6);
-    // Does conflict stabilize?
+    // NORMALIZACIÓN: Calcular suma total para porcentajes reales
+    const sumLast = last.y[0] + last.y[1] + last.y[2];
+    const N_normalized = (last.y[0] / sumLast) * 100;
+    const M_normalized = (last.y[1] / sumLast) * 100;
+    const D_normalized = (last.y[2] / sumLast) * 100;
+
+    // Peak manifestantes (también normalizado)
+    let peakM = 0;
+    let peakDay = null;
+    for (let i = 0; i < rk.length; i++) {
+        const sum = rk[i].y[0] + rk[i].y[1] + rk[i].y[2];
+        const mNorm = (rk[i].y[1] / sum) * 100;
+        if (mNorm > peakM) {
+            peakM = mNorm;
+            peakDay = rk[i];
+        }
+    }
+
+    // Does conflict stabilize? (usando datos normalizados)
     const lastQuarter = rk.slice(Math.floor(rk.length * 0.75));
-    const mVariance = lastQuarter.reduce((s, v) => s + Math.pow(v.y[1] - last.y[1], 2), 0) / lastQuarter.length;
-    const isStable = mVariance < 0.001;
+    let mVariance = 0;
+    for (let i = 0; i < lastQuarter.length; i++) {
+        const sum = lastQuarter[i].y[0] + lastQuarter[i].y[1] + lastQuarter[i].y[2];
+        const mNorm = (lastQuarter[i].y[1] / sum) * 100;
+        mVariance += Math.pow(mNorm - M_normalized, 2);
+    }
+    mVariance = mVariance / lastQuarter.length;
+    const isStable = mVariance < 0.1;
 
     let html = '<div class="grid-4" style="margin-bottom:1.5rem">';
-    html += `<div class="result-card"><h4>N final (Neutrales)</h4><div class="value cyan">${(last.y[0] * 100).toFixed(1)}%</div></div>`;
-    html += `<div class="result-card"><h4>M final (Manifestantes)</h4><div class="value rose">${(last.y[1] * 100).toFixed(1)}%</div></div>`;
-    html += `<div class="result-card"><h4>D final (Mediadores)</h4><div class="value emerald">${(last.y[2] * 100).toFixed(1)}%</div></div>`;
-    html += `<div class="result-card"><h4>Pico Manifestantes</h4><div class="value amber">${(peakM * 100).toFixed(1)}% (dÃ­a ${peakDay ? Math.round(peakDay.t) : '?'})</div></div>`;
+    html += `<div class="result-card"><h4>N final (Neutrales)</h4><div class="value cyan">${N_normalized.toFixed(1)}%</div></div>`;
+    html += `<div class="result-card"><h4>M final (Manifestantes)</h4><div class="value rose">${M_normalized.toFixed(1)}%</div></div>`;
+    html += `<div class="result-card"><h4>D final (Mediadores)</h4><div class="value emerald">${D_normalized.toFixed(1)}%</div></div>`;
+    html += `<div class="result-card"><h4>Pico Manifestantes</h4><div class="value amber">${peakM.toFixed(1)}% (día ${peakDay ? Math.round(peakDay.t) : '?'})</div></div>`;
     html += '</div>';
 
     // Questions answered
-    html += '<div class="interpretation-box" style="margin-bottom:1.5rem"><h4>ðŸ“‹ Respuestas a las Preguntas del Escenario</h4>';
-    html += `<p><strong>1. Â¿El conflicto tiende a estabilizarse?</strong> ${isStable ? 'SÃ­, el sistema alcanza un equilibrio con N=' + (last.y[0]*100).toFixed(1) + '%, M=' + (last.y[1]*100).toFixed(1) + '%, D=' + (last.y[2]*100).toFixed(1) + '%.' : 'No, el sistema muestra oscilaciones o crecimiento inestable al final del perÃ­odo.'}</p>`;
-    html += `<p><strong>2. Â¿El nÃºmero de manifestantes aumenta o disminuye?</strong> ${last.y[1] > rk[0].y[1] ? 'Aumenta de ' + (rk[0].y[1]*100).toFixed(1) + '% a ' + (last.y[1]*100).toFixed(1) + '% (crecimiento neto).' : 'Disminuye de ' + (rk[0].y[1]*100).toFixed(1) + '% a ' + (last.y[1]*100).toFixed(1) + '% (el diÃ¡logo es efectivo).'} El pico fue de ${(peakM*100).toFixed(1)}% el dÃ­a ${peakDay ? Math.round(peakDay.t) : '?'}.</p>`;
-    html += `<p><strong>3. Â¿QuÃ© pasa si mejora la tasa de diÃ¡logo?</strong> Use el botÃ³n "DiÃ¡logo efectivo" para simular. Un aumento en c (efectividad) y b (retorno) reduce significativamente el pico de manifestantes.</p>`;
-    html += `<p><strong>4. Â¿QuÃ© pasa si no existen mediadores?</strong> Use el botÃ³n "Sin mediadores" para simular. Sin mediadores (Dâ‚€=0, k=0), los manifestantes crecen sin control.</p>`;
-    html += `<p><strong>5. Â¿QuÃ© parÃ¡metros hacen que el conflicto se masifique?</strong> Una tasa de influencia a alta (>${Utils.formatNum(params.a, 2)}) combinada con baja efectividad de diÃ¡logo c (<${Utils.formatNum(params.c, 2)}) lleva a masificaciÃ³n. Use el botÃ³n "Conflicto masivo" para verlo.</p>`;
+    html += '<div class="interpretation-box" style="margin-bottom:1.5rem"><h4>📋 Respuestas a las Preguntas del Escenario</h4>';
+    html += `<p><strong>1. ¿El conflicto tiende a estabilizarse?</strong> ${isStable ? 'Sí, el sistema alcanza un equilibrio con N=' + N_normalized.toFixed(1) + '%, M=' + M_normalized.toFixed(1) + '%, D=' + D_normalized.toFixed(1) + '%.' : 'No, el sistema muestra oscilaciones o crecimiento inestable al final del período.'}</p>`;
+    
+    // Calcular tendencia de manifestantes (normalizada)
+    const sumFirst = rk[0].y[0] + rk[0].y[1] + rk[0].y[2];
+    const M_inicial = (rk[0].y[1] / sumFirst) * 100;
+    const tendencia = M_normalized > M_inicial ? 'aumenta' : 'disminuye';
+    html += `<p><strong>2. ¿El número de manifestantes aumenta o disminuye?</strong> ${tendencia} de ${M_inicial.toFixed(1)}% a ${M_normalized.toFixed(1)}%. El pico fue de ${peakM.toFixed(1)}% el día ${peakDay ? Math.round(peakDay.t) : '?'}.</p>`;
+    html += `<p><strong>3. ¿Qué pasa si mejora la tasa de diálogo?</strong> Use el botón "Diálogo efectivo" para simular. Un aumento en c (efectividad) y b (retorno) reduce significativamente el pico de manifestantes.</p>`;
+    html += `<p><strong>4. ¿Qué pasa si no existen mediadores?</strong> Use el botón "Sin mediadores" para simular. Sin mediadores (D₀=0, k=0), los manifestantes crecen sin control.</p>`;
+    html += `<p><strong>5. ¿Qué parámetros hacen que el conflicto se masifique?</strong> Una tasa de influencia a alta (>${params.a.toFixed(4)}) combinada con baja efectividad de diálogo c (<${params.c.toFixed(4)}) lleva a masificación. Use el botón "Conflicto masivo" para verlo.</p>`;
     html += '</div>';
 
     // Table
-    html += '<h3 style="margin:1rem 0 0.75rem;font-size:1rem">EvoluciÃ³n del Sistema N-M-D</h3><div id="deq-table"></div>';
+    html += '<h3 style="margin:1rem 0 0.75rem;font-size:1rem">Evolución del Sistema N-M-D (Porcentajes Normalizados)</h3><div id="deq-table"></div>';
     Utils.showResults('deq-results', html);
 
     const sr = Math.max(1, Math.floor(rk.length / 25));
-    const tRows = rk.filter((_, i) => i % sr === 0 || i === rk.length - 1).map(s => [
-      Math.round(s.t),
-      (s.y[0] * 100).toFixed(2) + '%',
-      (s.y[1] * 100).toFixed(2) + '%',
-      (s.y[2] * 100).toFixed(2) + '%'
-    ]);
-    Utils.createTable(['DÃ­a', 'N (Neutrales)', 'M (Manifestantes)', 'D (Mediadores)'], tRows, 'deq-table');
+    const tRows = [];
+    for (let i = 0; i < rk.length; i++) {
+        if (i % sr === 0 || i === rk.length - 1) {
+            const sum = rk[i].y[0] + rk[i].y[1] + rk[i].y[2];
+            const N_pct = (rk[i].y[0] / sum) * 100;
+            const M_pct = (rk[i].y[1] / sum) * 100;
+            const D_pct = (rk[i].y[2] / sum) * 100;
+            tRows.push([
+                Math.round(rk[i].t),
+                N_pct.toFixed(2) + '%',
+                M_pct.toFixed(2) + '%',
+                D_pct.toFixed(2) + '%'
+            ]);
+        }
+    }
+    Utils.createTable(['Día', 'N (Neutrales)', 'M (Manifestantes)', 'D (Mediadores)'], tRows, 'deq-table');
 
-    // Chart
+    // Chart (datos normalizados para gráfica)
     const si = Math.max(1, Math.floor(rk.length / 100));
-    const labels = rk.filter((_, i) => i % si === 0).map(s => Math.round(s.t));
+    const labels = [];
+    const neutralesData = [];
+    const manifestantesData = [];
+    const mediadoresData = [];
+
+    for (let i = 0; i < rk.length; i++) {
+        if (i % si === 0 || i === rk.length - 1) {
+            const sum = rk[i].y[0] + rk[i].y[1] + rk[i].y[2];
+            labels.push(Math.round(rk[i].t));
+            neutralesData.push((rk[i].y[0] / sum) * 100);
+            manifestantesData.push((rk[i].y[1] / sum) * 100);
+            mediadoresData.push((rk[i].y[2] / sum) * 100);
+        }
+    }
+
     ChartManager.createLine('deq-evolution-chart', labels, [
-      { label: 'N â€” Neutrales', data: rk.filter((_, i) => i % si === 0).map(s => (s.y[0] * 100)), borderColor: '#06b6d4', fill: true, backgroundColor: 'rgba(6,182,212,0.08)' },
-      { label: 'M â€” Manifestantes', data: rk.filter((_, i) => i % si === 0).map(s => (s.y[1] * 100)), borderColor: '#f43f5e', fill: true, backgroundColor: 'rgba(244,63,94,0.08)' },
-      { label: 'D â€” Mediadores', data: rk.filter((_, i) => i % si === 0).map(s => (s.y[2] * 100)), borderColor: '#10b981', fill: true, backgroundColor: 'rgba(16,185,129,0.08)' }
+        { label: 'N — Neutrales', data: neutralesData, borderColor: '#06b6d4', fill: true, backgroundColor: 'rgba(6,182,212,0.08)' },
+        { label: 'M — Manifestantes', data: manifestantesData, borderColor: '#f43f5e', fill: true, backgroundColor: 'rgba(244,63,94,0.08)' },
+        { label: 'D — Mediadores', data: mediadoresData, borderColor: '#10b981', fill: true, backgroundColor: 'rgba(16,185,129,0.08)' }
     ], {
-      plugins: { title: { display: true, text: 'DinÃ¡mica Social: Neutrales - Manifestantes - Mediadores', color: '#f1f5f9', font: { size: 14, family: 'Inter' } } },
-      scales: { x: { title: { display: true, text: 'DÃ­as', color: '#94a3b8' } }, y: { title: { display: true, text: 'Porcentaje de PoblaciÃ³n (%)', color: '#94a3b8' } } }
+        plugins: { 
+            title: { 
+                display: true, 
+                text: 'Dinámica Social: Neutrales - Manifestantes - Mediadores (Población Normalizada)', 
+                color: '#f1f5f9', 
+                font: { size: 14, family: 'Inter' } 
+            } 
+        },
+        scales: { 
+            x: { title: { display: true, text: 'Días', color: '#94a3b8' } }, 
+            y: { title: { display: true, text: 'Porcentaje de Población (%)', color: '#94a3b8' }, min: 0, max: 100 }
+        }
     });
 
-    // Method comparison
+    // Method comparison (también normalizado)
     if (keys.length > 1) {
-      const mDataSets = keys.map((k, idx) => ({
-        label: `M â€” ${mNames[k]}`,
-        data: results[k].filter((_, i) => i % si === 0).map(s => (s.y[1] * 100)),
-        borderColor: ChartManager.defaults.palette[idx]
-      }));
-      ChartManager.createLine('deq-stability-chart', labels, mDataSets, {
-        plugins: { title: { display: true, text: 'ComparaciÃ³n de MÃ©todos â€” Curva M (Manifestantes)', color: '#f1f5f9', font: { size: 14, family: 'Inter' } } }
-      });
+        const mDataSets = [];
+        const colores = ['#f43f5e', '#f97316', '#eab308'];
+        for (let idx = 0; idx < keys.length; idx++) {
+            const k = keys[idx];
+            const data = [];
+            const res = results[k];
+            for (let i = 0; i < res.length; i++) {
+                if (i % si === 0 || i === res.length - 1) {
+                    const sum = res[i].y[0] + res[i].y[1] + res[i].y[2];
+                    data.push((res[i].y[1] / sum) * 100);
+                }
+            }
+            mDataSets.push({
+                label: `M — ${mNames[k]}`,
+                data: data,
+                borderColor: colores[idx % colores.length],
+                borderWidth: 2,
+                fill: false
+            });
+        }
+        ChartManager.createLine('deq-stability-chart', labels, mDataSets, {
+            plugins: { 
+                title: { 
+                    display: true, 
+                    text: 'Comparación de Métodos — Curva M (Manifestantes Normalizados)', 
+                    color: '#f1f5f9', 
+                    font: { size: 14, family: 'Inter' } 
+                } 
+            },
+            scales: {
+                y: { min: 0, max: 100, title: { display: true, text: 'Manifestantes (%)', color: '#94a3b8' } }
+            }
+        });
     }
 
     // Interpretation
     const interpDiv = document.getElementById('deq-interpretation');
     if (interpDiv) {
-      interpDiv.innerHTML = `<div class="interpretation-box"><h4>ðŸ“Š InterpretaciÃ³n: DifusiÃ³n del Descontento Social</h4>
-        <p>El modelo N-M-D muestra que los manifestantes activos alcanzan un pico de <strong>${(peakM*100).toFixed(1)}%</strong> alrededor del dÃ­a <strong>${peakDay ? Math.round(peakDay.t) : '?'}</strong>. Al final del perÃ­odo, la composiciÃ³n social es: ${(last.y[0]*100).toFixed(1)}% neutrales, ${(last.y[1]*100).toFixed(1)}% manifestantes, ${(last.y[2]*100).toFixed(1)}% mediadores.</p>
-        <p><strong>Modelo:</strong> N'(t) = -aÂ·NÂ·M + bÂ·D | M'(t) = aÂ·NÂ·M - cÂ·MÂ·D | D'(t) = kÂ·M - rÂ·D</p>
-        <p>Los ciudadanos neutrales se convierten en manifestantes al interactuar con ellos (tasa a=${params.a}). Los mediadores reducen los manifestantes (tasa c=${params.c}) y facilitan el retorno a la neutralidad (tasa b=${params.b}). El desgaste de los mediadores (r=${params.r}) limita su efectividad a largo plazo.</p>
-        <p><strong>Para los tomadores de decisiones:</strong> Fortalecer la mediaciÃ³n (aumentar k y c) es la estrategia mÃ¡s efectiva. Las intervenciones deben realizarse <strong>antes del dÃ­a ${peakDay ? Math.round(peakDay.t) : '?'}</strong> (pico de manifestantes).</p>
+        interpDiv.innerHTML = `<div class="interpretation-box"><h4>📊 Interpretación: Difusión del Descontento Social</h4>
+        <p>El modelo N-M-D muestra que los manifestantes activos alcanzan un pico de <strong>${peakM.toFixed(1)}%</strong> alrededor del día <strong>${peakDay ? Math.round(peakDay.t) : '?'}</strong>. Al final del período, la composición social normalizada es: <strong>${N_normalized.toFixed(1)}% neutrales, ${M_normalized.toFixed(1)}% manifestantes, ${D_normalized.toFixed(1)}% mediadores</strong>.</p>
+        <p><strong>Modelo dinámico:</strong></p>
+        <p style="font-family: monospace; background: #1e293b; padding: 10px; border-radius: 8px; text-align: center;">
+        N'(t) = -a·N·M + b·D<br>
+        M'(t) = a·N·M - c·M·D<br>
+        D'(t) = k·M - r·D
+        </p>
+        <p><strong>Interpretación de parámetros:</strong><br>
+        • <strong>a = ${params.a}</strong> — Tasa de influencia: qué tan rápido los neutrales se convierten en manifestantes.<br>
+        • <strong>b = ${params.b}</strong> — Tasa de retorno: facilitada por mediadores para volver a la neutralidad.<br>
+        • <strong>c = ${params.c}</strong> — Efectividad del diálogo: reduce manifestantes al interactuar con mediadores.<br>
+        • <strong>k = ${params.k}</strong> — Reacción institucional: genera mediadores en respuesta a manifestantes.<br>
+        • <strong>r = ${params.r}</strong> — Desgaste de mediadores: límite de tiempo de los actores de diálogo.
+        </p>
+        <p><strong>Para los tomadores de decisiones:</strong> Fortalecer la mediación (aumentar k y c) es la estrategia más efectiva. Las intervenciones deben realizarse <strong>antes del día ${peakDay ? Math.round(peakDay.t) : '?'}</strong> (pico de manifestantes).</p>
+        <p><strong>✅ Nota:</strong> Todos los porcentajes están normalizados (suma total = 100%).</p>
       </div>`;
     }
-  }
-
+}
   loadScenarioParams();
 });
 
