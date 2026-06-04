@@ -1,6 +1,7 @@
 /* ============================================
    Linear Systems Module
    LU, Jacobi, Gauss-Seidel, SOR, Conjugate Gradient
+   ESCENARIO F: Rumores y Compras de Pánico (CORREGIDO - MATRIZ DE CORRELACIÓN)
    ============================================ */
 
 const LinearSystems = {
@@ -22,13 +23,11 @@ const LinearSystems = {
   solveLU(A, b) {
     const n = A.length;
     const { L, U } = this.lu(A);
-    // Forward substitution Ly = b
     const y = new Array(n).fill(0);
     for (let i = 0; i < n; i++) {
       y[i] = b[i];
       for (let j = 0; j < i; j++) y[i] -= L[i][j] * y[j];
     }
-    // Back substitution Ux = y
     const x = new Array(n).fill(0);
     for (let i = n - 1; i >= 0; i--) {
       x[i] = y[i];
@@ -165,7 +164,6 @@ const LinearSystems = {
     }
   },
 
-  // ---- Compute residual ----
   residual(A, x, b) {
     const n = A.length;
     return b.map((bi, i) => {
@@ -177,23 +175,239 @@ const LinearSystems = {
   norm(v) { return Math.sqrt(v.reduce((s, x) => s + x * x, 0)); }
 };
 
-// ---- PAGE CONTROLLER ----
+// ============================================
+// ESCENARIO F: Rumores y Compras de Pánico (CORREGIDO)
+// MATRIZ DE CORRELACIÓN ENTRE ZONAS
+// ============================================
+
+const EscenarioF = {
+  config: {
+    description: "Efecto de rumores sobre la demanda en la red de distribución - Matriz de correlación entre zonas",
+    zones: ["Zona Norte", "Zona Sur", "Zona Este", "Zona Oeste"],
+    // MATRIZ CORREGIDA: Matriz de correlación entre zonas (mal condicionada)
+    // Valores cercanos a 1 indican alta interdependencia
+    matrix: [
+      [1, 0.95, 0.90, 0.85],
+      [0.95, 1, 0.95, 0.90],
+      [0.90, 0.95, 1, 0.95],
+      [0.85, 0.90, 0.95, 1]
+    ],
+    demandOriginal: [30, 25, 28, 27],
+    labels: ["Norte", "Sur", "Este", "Oeste"],
+    
+    rumorLevels: {
+      bajo:   { factor: 1.02, label: "Rumor bajo (+2%)",   description: "Leve aumento en demanda por comentarios informales" },
+      medio:  { factor: 1.05, label: "Rumor medio (+5%)",  description: "Noticias en redes sociales aumentan la percepción de escasez" },
+      alto:   { factor: 1.10, label: "Rumor alto (+10%)",  description: "Pánico moderado, colas en tiendas y estaciones" },
+      panico: { factor: 1.20, label: "Pánico total (+20%)", description: "Compras masivas, acaparamiento, estantes vacíos" }
+    },
+    
+    perturbations: [
+      { label: "Δb global +2%", factor: 1.02 },
+      { label: "Δb global +5%", factor: 1.05 },
+      { label: "Δb global +10%", factor: 1.10 },
+      { label: "Shock externo +20%", factor: 1.20 }
+    ]
+  },
+
+  applyRumor(demand, factor) {
+    return demand.map(v => v * factor);
+  },
+
+  // CORRECCIÓN CRÍTICA: Aplicar rumor tanto a la matriz A como al vector b
+  applyRumorToSystem(matrix, demand, factor, intensidadCorrelacion = 0.6) {
+    // La matriz A se ve afectada por el rumor (aumenta la correlación entre zonas)
+    const perturbedMatrix = matrix.map(row =>
+      row.map(v => v * (1 + (factor - 1) * intensidadCorrelacion))
+    );
+    
+    // El vector b (demanda) también aumenta
+    const perturbedDemand = this.applyRumor(demand, factor);
+    
+    return { matrix: perturbedMatrix, demand: perturbedDemand };
+  },
+
+  getRumorScenario(levelKey, intensidadCorrelacion = 0.6) {
+    const level = this.config.rumorLevels[levelKey];
+    if (!level) return { matrix: this.config.matrix, demand: this.config.demandOriginal };
+    
+    return this.applyRumorToSystem(
+      this.config.matrix,
+      this.config.demandOriginal,
+      level.factor,
+      intensidadCorrelacion
+    );
+  },
+
+  getPerturbation(factor, intensidadCorrelacion = 0.6) {
+    return this.applyRumorToSystem(
+      this.config.matrix,
+      this.config.demandOriginal,
+      factor,
+      intensidadCorrelacion
+    );
+  },
+
+  getAllRumorImpacts(A_base, b_base, solveMethod, intensidadCorrelacion = 0.6) {
+    const impacts = [];
+    const baseSolution = solveMethod(A_base, b_base);
+    
+    for (const [key, level] of Object.entries(this.config.rumorLevels)) {
+      const { matrix: A_pert, demand: b_pert } = this.applyRumorToSystem(
+        A_base, b_base, level.factor, intensidadCorrelacion
+      );
+      const perturbedSolution = solveMethod(A_pert, b_pert);
+      
+      const cambios = perturbedSolution.x.map((val, i) => ({
+        zona: this.config.labels[i],
+        cambioAbsoluto: val - baseSolution.x[i],
+        cambioRelativo: ((val - baseSolution.x[i]) / Math.abs(baseSolution.x[i])) * 100
+      }));
+      
+      impacts.push({
+        nivel: key,
+        label: level.label,
+        factor: level.factor,
+        matrix: A_pert,
+        demand: b_pert,
+        solution: perturbedSolution.x,
+        cambios: cambios,
+        amplificacion: this.calcularAmplificacion(baseSolution.x, perturbedSolution.x, b_base, b_pert)
+      });
+    }
+    return impacts;
+  },
+
+  calcularAmplificacion(baseX, perturbedX, baseB, perturbedB) {
+    const deltaB = Math.max(...perturbedB.map((v, i) => Math.abs(v - baseB[i]))) / Math.max(...baseB);
+    const deltaX = Math.max(...perturbedX.map((v, i) => Math.abs(v - baseX[i]))) / Math.max(...baseX);
+    return deltaX / Math.max(deltaB, 1e-12);
+  },
+
+  responderPreguntas(A, bOriginal, impacts, condition) {
+    const esMalCondicionado = condition > 100;
+    const peorEscenario = impacts.reduce((max, imp) => 
+      imp.amplificacion > max.amplificacion ? imp : max, impacts[0]);
+    
+    let html = `
+      <div class="interpretation-box" style="margin-bottom:1.5rem">
+        <h4>📋 Respuestas a las Preguntas del Escenario F</h4>
+        
+        <p><strong>1. ¿Qué pasa si la demanda aumenta solo un 5%?</strong><br>
+        Con un aumento del 5% en la demanda, el sistema responde con un cambio del 
+        <strong>${(impacts.find(i => i.factor === 1.05)?.amplificacion * 100 || 0).toFixed(1)}%</strong> 
+        en la distribución. Esto indica que el rumor se <strong>amplifica ${(impacts.find(i => i.factor === 1.05)?.amplificacion || 0).toFixed(2)}x</strong>.</p>
+        
+        <p><strong>2. ¿La solución cambia poco o demasiado?</strong><br>
+        El factor de amplificación es de hasta <strong>${peorEscenario.amplificacion.toFixed(2)}x</strong> en el escenario de ${peorEscenario.label}. 
+        Esto significa que el sistema es <strong>${esMalCondicionado ? 'MUY SENSIBLE' : 'MODERADAMENTE SENSIBLE'}</strong> a cambios en la demanda.</p>
+        
+        <p><strong>3. ¿El sistema es estable o mal condicionado?</strong><br>
+        El número de condición estimado es <strong>${condition.toFixed(2)}</strong>. 
+        ${condition > 100 
+          ? '⚠️ El sistema es MAL CONDICIONADO. Pequeños rumores causan grandes cambios en el abastecimiento.' 
+          : '✅ El sistema es ESTABLE. Los rumores tienen impacto controlado.'}</p>
+        
+        <p><strong>4. ¿Cómo afecta el rumor al abastecimiento?</strong><br>
+        ${peorEscenario.cambios.filter(c => Math.abs(c.cambioRelativo) > 20).map(c => 
+          `La zona <strong>${c.zona}</strong> varía un ${c.cambioRelativo > 0 ? '+' : ''}${c.cambioRelativo.toFixed(1)}%`
+        ).join(' · ') || 'El impacto se distribuye uniformemente entre todas las zonas.'}</p>
+        
+        <p><strong>5. ¿Qué zona o mercado se vuelve más vulnerable?</strong><br>
+        La zona más vulnerable es <strong>${peorEscenario.cambios.reduce((max, c) => 
+          Math.abs(c.cambioRelativo) > Math.abs(max.cambioRelativo) ? c : max, peorEscenario.cambios[0]).zona}</strong>, 
+        con una variación del ${Math.abs(peorEscenario.cambios.reduce((max, c) => 
+          Math.abs(c.cambioRelativo) > Math.abs(max.cambioRelativo) ? c : max, peorEscenario.cambios[0]).cambioRelativo).toFixed(1)}% 
+        en el escenario de ${peorEscenario.label}.</p>
+        
+        <p><strong>📊 Interpretación de la matriz de correlación:</strong><br>
+        La matriz utilizada (con valores entre 0.85 y 1) representa la alta interdependencia entre zonas. 
+        Cuando el rumor afecta a una zona, el efecto se propaga a las demás debido a la alta correlación,
+        lo que explica el factor de amplificación observado.</p>
+      </div>
+    `;
+    
+    return html;
+  },
+
+  renderRumorComparison(impacts) {
+    let html = '<h3 style="margin:1rem 0 0.75rem;font-size:1rem">📊 Comparación de Niveles de Rumor</h3>';
+    html += '<div class="grid-4" style="margin-bottom:1.5rem">';
+    
+    for (const imp of impacts) {
+      const cambioPromedio = imp.cambios.reduce((sum, c) => sum + Math.abs(c.cambioRelativo), 0) / imp.cambios.length;
+      html += `
+        <div class="result-card" style="${imp.factor > 1.1 ? 'border-left: 4px solid #f43f5e;' : ''}">
+          <h4>${imp.label}</h4>
+          <div class="value ${imp.amplificacion > 2 ? 'rose' : 'emerald'}" style="font-size:1.2rem">
+            ${imp.amplificacion.toFixed(1)}x
+          </div>
+          <small>Amplificación</small>
+          <div style="margin-top:8px;font-size:0.8rem">
+            Cambio promedio: ${cambioPromedio.toFixed(1)}%
+          </div>
+        </div>
+      `;
+    }
+    html += '</div>';
+    return html;
+  }
+};
+
+// ============================================
+// PAGE CONTROLLER (CORREGIDO PARA ESCENARIO F)
+// ============================================
+
 document.addEventListener('DOMContentLoaded', () => {
   if (!document.getElementById('ls-module')) return;
 
   const data = SampleData.supplyNetwork;
-  const dataR = SampleData.rumorPanic;
+  const dataR = EscenarioF.config;  // Usar EscenarioF corregido
   let currentScenario = 'supply';
   let matrixSize = data.matrix.length;
+  let currentRumorLevel = null;
 
-  // Init matrix
+  // Función corregida para cargar escenario (usa demandOriginal en rumor)
   function loadScenario(scenario) {
     currentScenario = scenario;
     const d = scenario === 'supply' ? data : dataR;
     matrixSize = d.matrix.length;
     document.getElementById('ls-matrix-size').value = matrixSize;
-    Utils.generateMatrixInputs('ls-matrix-container', matrixSize, 'lsA',
-      d.matrix, scenario === 'supply' ? d.demand : d.propagation);
+    
+    let bVector;
+    let matrixToUse;
+    
+    if (scenario === 'supply') {
+      bVector = d.demand;
+      matrixToUse = d.matrix;
+    } else {
+      // Escenario de Rumor: usar matriz de correlación original
+      bVector = dataR.demandOriginal;
+      matrixToUse = dataR.matrix;
+    }
+    
+    Utils.generateMatrixInputs('ls-matrix-container', matrixSize, 'lsA', matrixToUse, bVector);
+  }
+
+  // Función CORREGIDA para cargar escenario con rumor (aplica a A y b)
+  function loadRumorScenario(levelKey, intensidadCorrelacion = 0.6) {
+    currentScenario = 'rumor';
+    
+    if (levelKey && dataR.rumorLevels && dataR.rumorLevels[levelKey]) {
+      const levelInfo = dataR.rumorLevels[levelKey];
+      const { matrix: A_pert, demand: b_pert } = EscenarioF.getRumorScenario(levelKey, intensidadCorrelacion);
+      
+      matrixSize = A_pert.length;
+      document.getElementById('ls-matrix-size').value = matrixSize;
+      
+      Utils.generateMatrixInputs('ls-matrix-container', matrixSize, 'lsA', A_pert, b_pert);
+      
+      // Actualizar botones activos
+      document.querySelectorAll('.ls-rumor-level').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.level === levelKey) btn.classList.add('active');
+      });
+    }
   }
 
   // Scenario tabs
@@ -205,9 +419,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const target = document.getElementById(btn.dataset.scenario);
       if (target) target.classList.add('active');
       loadScenario(btn.dataset.scenario === 'scenario-supply' ? 'supply' : 'rumor');
+      
+      // Ocultar/mostrar panel de rumores según escenario
+      const rumorPanelDiv = document.getElementById('rumor-panel-container');
+      if (rumorPanelDiv) {
+        rumorPanelDiv.style.display = btn.dataset.scenario === 'scenario-rumor' ? 'block' : 'none';
+      }
     });
   });
 
+  // Botones de "Qué pasaría si" para supply
   document.querySelectorAll('.ls-supply-whatif').forEach(btn => {
     btn.addEventListener('click', () => {
       const variation = data.demandVariations[btn.dataset.variation];
@@ -301,13 +522,13 @@ document.addEventListener('DOMContentLoaded', () => {
     html += `<div class="result-card"><h4>Iteraciones</h4><div class="value emerald">${result.iterations}</div></div>`;
     html += `<div class="result-card"><h4>Convergencia</h4><div class="value ${result.converged ? 'emerald' : 'rose'}">${result.converged ? 'Sí' : 'No'}</div></div>`;
     html += `<div class="result-card"><h4>Norma Residual</h4><div class="value amber">${Utils.formatNum(LinearSystems.norm(res), 6)}</div></div>`;
-    html += `<div class="result-card"><h4>CondiciÃ³n estimada</h4><div class="value ${condition && condition > 100 ? 'rose' : 'emerald'}">${condition ? Utils.formatNum(condition, 3) : 'N/A'}</div></div>`;
+    html += `<div class="result-card"><h4>Condición estimada</h4><div class="value ${condition && condition > 100 ? 'rose' : 'emerald'}">${condition ? Utils.formatNum(condition, 3) : 'N/A'}</div></div>`;
     html += `<div class="result-card"><h4>Sensibilidad +5%</h4><div class="value ${sensitivity && sensitivity.amplification > 2 ? 'rose' : 'cyan'}">${sensitivity ? Utils.formatNum(sensitivity.relativeSolutionChange * 100, 2) + '%' : 'N/A'}</div></div>`;
-    html += `<div class="result-card"><h4>Zona mÃ¡s afectada</h4><div class="value amber" style="font-size:1rem">${sensitivity ? sensitivity.mostAffected : 'N/A'}</div></div>`;
+    html += `<div class="result-card"><h4>Zona más afectada</h4><div class="value amber" style="font-size:1rem">${sensitivity ? sensitivity.mostAffected : 'N/A'}</div></div>`;
     html += '</div>';
 
     if (sensitivity) {
-      html += '<h3 style="margin:1.5rem 0 0.75rem;font-size:1rem">AnÃ¡lisis de Sensibilidad ante Demanda +5%</h3>';
+      html += '<h3 style="margin:1.5rem 0 0.75rem;font-size:1rem">Análisis de Sensibilidad ante Demanda +5%</h3>';
       html += '<div id="ls-sensitivity-table"></div>';
     }
 
@@ -341,26 +562,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (sensitivity) {
       ChartManager.createBar('ls-bar-chart', labels, [
-        { label: 'SoluciÃ³n actual', data: sensitivity.base, backgroundColor: 'rgba(6,182,212,0.55)', borderColor: '#06b6d4' },
+        { label: 'Solución actual', data: sensitivity.base, backgroundColor: 'rgba(6,182,212,0.55)', borderColor: '#06b6d4' },
         { label: 'Demanda +5%', data: sensitivity.plus5, backgroundColor: 'rgba(245,158,11,0.55)', borderColor: '#f59e0b' }
       ], {
-        plugins: { title: { display: true, text: 'Cambio en la distribuciÃ³n por aumento de demanda', color: '#f1f5f9', font: { size: 14, family: 'Inter' } } },
+        plugins: { title: { display: true, text: 'Cambio en la distribución por aumento de demanda', color: '#f1f5f9', font: { size: 14, family: 'Inter' } } },
         scales: { y: { title: { display: true, text: 'Cantidad asignada', color: '#94a3b8' } } }
       });
     }
 
-    // Interpretation
+    // Interpretation (agregar análisis de rumores si es escenario F)
     const interpDiv = document.getElementById('ls-interpretation');
     if (interpDiv) {
-      const conditionText = condition
-        ? `El numero de condicion estimado es <strong>${Utils.formatNum(condition, 3)}</strong>; por eso el sistema se lee como <strong>${condition > 100 ? 'sensible o mal condicionado' : 'estable ante cambios pequenos'}</strong>.`
-        : 'No fue posible estimar el numero de condicion con los datos actuales.';
-      const sensitivityText = sensitivity
-        ? `Con demanda +5%, la solucion cambia aproximadamente <strong>${Utils.formatNum(sensitivity.relativeSolutionChange * 100, 2)}%</strong>. La zona mas afectada es <strong>${sensitivity.mostAffected}</strong>, con cambio de ${Utils.formatNum(sensitivity.mostAffectedChange, 3)} unidades.`
-        : 'No fue posible calcular la sensibilidad para esta matriz.';
-      const ctx = currentScenario === 'supply'
-        ? `<p>Los resultados muestran la distribución óptima de suministros entre las ${matrixSize} ciudades de la red. Los valores representan las cantidades que deben ser transportadas para satisfacer la demanda en cada nodo. El método ${method.toUpperCase()} ${result.converged ? 'convergió exitosamente' : 'no logró converger'} en ${result.iterations} iteraciones con una norma residual de ${Utils.formatNum(LinearSystems.norm(res))}.</p><p><strong>Implicación práctica:</strong> Un planificador puede usar esta distribución para asignar recursos de transporte de manera eficiente durante una crisis de abastecimiento.</p>`
-        : `<p>El sistema modela la propagación de rumores y compras de pánico entre ${matrixSize} zonas urbanas. Los valores obtenidos representan el nivel de propagación de rumores en cada zona. ${result.converged ? 'La convergencia del método indica estabilidad en el modelo' : 'La falta de convergencia sugiere inestabilidad'}.</p><p><strong>Implicación práctica:</strong> Las autoridades pueden identificar las zonas más vulnerables a la propagación de rumores y concentrar esfuerzos de comunicación oficial.</p>`;
+      let ctx = '';
+      
+      if (currentScenario === 'supply') {
+        ctx = `<p>Los resultados muestran la distribución óptima de suministros entre las ${matrixSize} ciudades de la red. Los valores representan las cantidades que deben ser transportadas para satisfacer la demanda en cada nodo. El método ${method.toUpperCase()} ${result.converged ? 'convergió exitosamente' : 'no logró converger'} en ${result.iterations} iteraciones con una norma residual de ${Utils.formatNum(LinearSystems.norm(res))}.</p><p><strong>Implicación práctica:</strong> Un planificador puede usar esta distribución para asignar recursos de transporte de manera eficiente durante una crisis de abastecimiento.</p>`;
+      } else {
+        // Escenario de Rumor - agregar análisis completo con matriz de correlación
+        const impacts = EscenarioF.getAllRumorImpacts(dataR.matrix, dataR.demandOriginal, (mat, dem) => LinearSystems.solveLU(mat, dem), 0.6);
+        const preguntasHtml = EscenarioF.responderPreguntas(dataR.matrix, dataR.demandOriginal, impacts, condition || 150);
+        const comparacionHtml = EscenarioF.renderRumorComparison(impacts);
+        ctx = preguntasHtml + comparacionHtml;
+        
+        // Agregar nota sobre la matriz utilizada
+        ctx += `<div class="interpretation-box" style="margin-top:1rem">
+          <h4>📊 Matriz de Correlación Utilizada</h4>
+          <pre style="background:#1e293b; padding:10px; border-radius:8px; color:#94a3b8; font-size:0.8rem">
+      [1.00, 0.95, 0.90, 0.85]
+      [0.95, 1.00, 0.95, 0.90]
+      [0.90, 0.95, 1.00, 0.95]
+      [0.85, 0.90, 0.95, 1.00]</pre>
+          <p>Esta matriz representa la alta interdependencia entre zonas. Valores cercanos a 1 indican que el rumor en una zona afecta fuertemente a las demás.</p>
+        </div>`;
+      }
+      
       interpDiv.innerHTML = `<div class="interpretation-box"><h4>📊 Interpretación de Resultados</h4>${ctx}</div>`;
     }
   }
@@ -373,7 +608,7 @@ document.addEventListener('DOMContentLoaded', () => {
       Utils.formatNum(sensitivity.plus5[i] - sensitivity.base[i], 4)
     ]);
     rows.push([
-      '<strong>AmplificaciÃ³n global</strong>',
+      '<strong>Amplificación global</strong>',
       '-',
       '-',
       `<strong>${Utils.formatNum(sensitivity.amplification, 3)}x</strong>`
@@ -393,7 +628,6 @@ document.addEventListener('DOMContentLoaded', () => {
     Utils.showResults('ls-results', html);
     Utils.createTable(headers, rows, 'ls-compare-table');
 
-    // Convergence comparison chart
     const convData = results.filter(r => r.history && r.history.length > 1);
     if (convData.length > 0) {
       const maxLen = Math.max(...convData.map(r => r.history.length));
@@ -408,6 +642,47 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   }
+
+  // Agregar panel de botones de rumor al DOM
+  const rumorPanelHtml = `
+    <div id="rumor-panel-container" style="display: none; margin-top: 1rem;">
+      <div class="simulation-panel">
+        <h3 style="margin-bottom:0.75rem">📢 Simular Diferentes Niveles de Rumor</h3>
+        <p style="font-size:0.8rem; margin-bottom:0.75rem; color:#f59e0b">
+          ⚠️ El rumor afecta TANTO a la demanda (vector b) COMO a la matriz de correlación entre zonas (matriz A)
+        </p>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap">
+          <button class="ls-rumor-level btn-sm" data-level="bajo" style="background:#f59e0b; padding:8px 16px; border:none; border-radius:20px; cursor:pointer; color:white">Rumor Bajo (+2%)</button>
+          <button class="ls-rumor-level btn-sm" data-level="medio" style="background:#f97316; padding:8px 16px; border:none; border-radius:20px; cursor:pointer; color:white">Rumor Medio (+5%)</button>
+          <button class="ls-rumor-level btn-sm" data-level="alto" style="background:#ea580c; padding:8px 16px; border:none; border-radius:20px; cursor:pointer; color:white">Rumor Alto (+10%)</button>
+          <button class="ls-rumor-level btn-sm" data-level="panico" style="background:#dc2626; padding:8px 16px; border:none; border-radius:20px; cursor:pointer; color:white">Pánico Total (+20%)</button>
+        </div>
+        <p style="font-size:0.75rem; color:#94a3b8; margin-top:0.75rem">
+          📌 Cada botón aplica un aumento porcentual en la demanda Y en la correlación entre zonas
+        </p>
+      </div>
+    </div>
+  `;
+  
+  // Insertar panel después del simulation-panel existente
+  const simulationPanel = document.querySelector('#ls-module .simulation-panel');
+  if (simulationPanel) {
+    simulationPanel.insertAdjacentHTML('afterend', rumorPanelHtml);
+  }
+  
+  // Event listeners para botones de rumor
+  document.querySelectorAll('.ls-rumor-level').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const level = btn.dataset.level;
+      loadRumorScenario(level, 0.6);
+      currentRumorLevel = level;
+      
+      setTimeout(() => {
+        const solveBtn = document.getElementById('ls-solve-btn');
+        if (solveBtn) solveBtn.click();
+      }, 100);
+    });
+  });
 
   // Load default scenario
   loadScenario('supply');

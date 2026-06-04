@@ -59,13 +59,13 @@ const SampleData = {
     description: "Efecto de rumores sobre la demanda en la red de distribución",
     zones: ["Zona Norte", "Zona Sur", "Zona Este", "Zona Oeste"],
     // Sistema mal condicionado: pequeños cambios en b causan grandes cambios en x
-    matrix: [
-      [10, 7, 8, 7],
-      [7, 5, 6, 5],
-      [8, 6, 10, 9],
-      [7, 5, 9, 10]
-    ],
-    demandOriginal: [32, 23, 33, 31],
+matrix: [
+  [12, 2, 1, 1],
+  [2, 12, 2, 1],
+  [1, 2, 12, 2],
+  [1, 1, 2, 12]
+],
+    demandOriginal: [30, 25, 28, 27],
     labels: ["D₁ (Norte)", "D₂ (Sur)", "D₃ (Este)", "D₄ (Oeste)"],
     // Niveles de rumor: cada nivel perturba la demanda
     rumorLevels: {
@@ -76,10 +76,10 @@ const SampleData = {
     },
     // Perturbaciones específicas para análisis
     perturbations: [
-      { label: "Δb = +0.01", delta: [0.01, 0.01, 0.01, 0.01] },
-      { label: "Δb = +0.1",  delta: [0.1, 0.1, 0.1, 0.1] },
-      { label: "Δb = +1.0",  delta: [1.0, 1.0, 1.0, 1.0] },
-      { label: "Δb = +5%",   delta: null },  // calculated as 5% of original
+      { label: "Δb global +2%", delta: "percent_2" },
+{ label: "Δb global +5%", delta: "percent_5" },
+{ label: "Δb global +10%", delta: "percent_10" },
+{ label: "Shock externo +20%", delta: "percent_20" }  // calculated as 5% of original
     ]
   },
 
