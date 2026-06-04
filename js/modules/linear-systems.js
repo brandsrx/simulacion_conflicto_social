@@ -119,6 +119,52 @@ const LinearSystems = {
     return { x, converged: false, iterations: maxIter, history };
   },
 
+  normInfMatrix(A) {
+    return Math.max(...A.map(row => row.reduce((s, v) => s + Math.abs(v), 0)));
+  },
+
+  normInfVector(v) {
+    return Math.max(...v.map(x => Math.abs(x)));
+  },
+
+  conditionEstimate(A) {
+    const n = A.length;
+    const invCols = [];
+    for (let col = 0; col < n; col++) {
+      const e = new Array(n).fill(0);
+      e[col] = 1;
+      invCols[col] = this.solveLU(A, e).x;
+    }
+    const invRows = Array.from({ length: n }, (_, i) => invCols.map(col => col[i]));
+    return this.normInfMatrix(A) * this.normInfMatrix(invRows);
+  },
+
+  sensitivityReport(A, b, labels) {
+    try {
+      const base = this.solveLU(A, b).x;
+      const bPlus5 = b.map(v => v * 1.05);
+      const plus5 = this.solveLU(A, bPlus5).x;
+      const deltaB = this.normInfVector(bPlus5.map((v, i) => v - b[i]));
+      const deltaX = this.normInfVector(plus5.map((v, i) => v - base[i]));
+      const relB = deltaB / Math.max(this.normInfVector(b), 1e-12);
+      const relX = deltaX / Math.max(this.normInfVector(base), 1e-12);
+      const mostAffectedIndex = plus5
+        .map((v, i) => ({ i, change: Math.abs(v - base[i]) }))
+        .sort((a, b) => b.change - a.change)[0]?.i ?? 0;
+      return {
+        base,
+        plus5,
+        relativeDemandChange: relB,
+        relativeSolutionChange: relX,
+        amplification: relX / Math.max(relB, 1e-12),
+        mostAffected: labels[mostAffectedIndex] || `x${mostAffectedIndex + 1}`,
+        mostAffectedChange: Math.abs(plus5[mostAffectedIndex] - base[mostAffectedIndex])
+      };
+    } catch (e) {
+      return null;
+    }
+  },
+
   // ---- Compute residual ----
   residual(A, x, b) {
     const n = A.length;
@@ -159,6 +205,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const target = document.getElementById(btn.dataset.scenario);
       if (target) target.classList.add('active');
       loadScenario(btn.dataset.scenario === 'scenario-supply' ? 'supply' : 'rumor');
+    });
+  });
+
+  document.querySelectorAll('.ls-supply-whatif').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const variation = data.demandVariations[btn.dataset.variation];
+      if (!variation) return;
+      currentScenario = 'supply';
+      matrixSize = data.matrix.length;
+      document.getElementById('ls-matrix-size').value = matrixSize;
+      Utils.generateMatrixInputs('ls-matrix-container', matrixSize, 'lsA', data.matrix, variation);
+      document.querySelectorAll('.ls-supply-whatif').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
     });
   });
 
@@ -229,6 +288,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = currentScenario === 'supply' ? data : dataR;
     const labels = d.labels || result.x.map((_, i) => `x${i + 1}`);
     const res = LinearSystems.residual(A, result.x, b);
+    const condition = (() => {
+      try { return LinearSystems.conditionEstimate(A); } catch (e) { return null; }
+    })();
+    const sensitivity = LinearSystems.sensitivityReport(A, b, labels);
 
     // Solution cards
     let html = '<div class="grid-3" style="margin-bottom:1.5rem">';
@@ -238,7 +301,15 @@ document.addEventListener('DOMContentLoaded', () => {
     html += `<div class="result-card"><h4>Iteraciones</h4><div class="value emerald">${result.iterations}</div></div>`;
     html += `<div class="result-card"><h4>Convergencia</h4><div class="value ${result.converged ? 'emerald' : 'rose'}">${result.converged ? 'Sí' : 'No'}</div></div>`;
     html += `<div class="result-card"><h4>Norma Residual</h4><div class="value amber">${Utils.formatNum(LinearSystems.norm(res), 6)}</div></div>`;
+    html += `<div class="result-card"><h4>CondiciÃ³n estimada</h4><div class="value ${condition && condition > 100 ? 'rose' : 'emerald'}">${condition ? Utils.formatNum(condition, 3) : 'N/A'}</div></div>`;
+    html += `<div class="result-card"><h4>Sensibilidad +5%</h4><div class="value ${sensitivity && sensitivity.amplification > 2 ? 'rose' : 'cyan'}">${sensitivity ? Utils.formatNum(sensitivity.relativeSolutionChange * 100, 2) + '%' : 'N/A'}</div></div>`;
+    html += `<div class="result-card"><h4>Zona mÃ¡s afectada</h4><div class="value amber" style="font-size:1rem">${sensitivity ? sensitivity.mostAffected : 'N/A'}</div></div>`;
     html += '</div>';
+
+    if (sensitivity) {
+      html += '<h3 style="margin:1.5rem 0 0.75rem;font-size:1rem">AnÃ¡lisis de Sensibilidad ante Demanda +5%</h3>';
+      html += '<div id="ls-sensitivity-table"></div>';
+    }
 
     // Convergence table
     if (result.history && result.history.length > 1) {
@@ -249,9 +320,11 @@ document.addEventListener('DOMContentLoaded', () => {
       ]);
       html += '<div id="ls-conv-table"></div>';
       Utils.showResults('ls-results', html);
+      if (sensitivity) renderSensitivityTable(labels, sensitivity);
       Utils.createTable(headers, rows, 'ls-conv-table');
     } else {
       Utils.showResults('ls-results', html);
+      if (sensitivity) renderSensitivityTable(labels, sensitivity);
     }
 
     // Convergence chart
@@ -266,14 +339,46 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    if (sensitivity) {
+      ChartManager.createBar('ls-bar-chart', labels, [
+        { label: 'SoluciÃ³n actual', data: sensitivity.base, backgroundColor: 'rgba(6,182,212,0.55)', borderColor: '#06b6d4' },
+        { label: 'Demanda +5%', data: sensitivity.plus5, backgroundColor: 'rgba(245,158,11,0.55)', borderColor: '#f59e0b' }
+      ], {
+        plugins: { title: { display: true, text: 'Cambio en la distribuciÃ³n por aumento de demanda', color: '#f1f5f9', font: { size: 14, family: 'Inter' } } },
+        scales: { y: { title: { display: true, text: 'Cantidad asignada', color: '#94a3b8' } } }
+      });
+    }
+
     // Interpretation
     const interpDiv = document.getElementById('ls-interpretation');
     if (interpDiv) {
+      const conditionText = condition
+        ? `El numero de condicion estimado es <strong>${Utils.formatNum(condition, 3)}</strong>; por eso el sistema se lee como <strong>${condition > 100 ? 'sensible o mal condicionado' : 'estable ante cambios pequenos'}</strong>.`
+        : 'No fue posible estimar el numero de condicion con los datos actuales.';
+      const sensitivityText = sensitivity
+        ? `Con demanda +5%, la solucion cambia aproximadamente <strong>${Utils.formatNum(sensitivity.relativeSolutionChange * 100, 2)}%</strong>. La zona mas afectada es <strong>${sensitivity.mostAffected}</strong>, con cambio de ${Utils.formatNum(sensitivity.mostAffectedChange, 3)} unidades.`
+        : 'No fue posible calcular la sensibilidad para esta matriz.';
       const ctx = currentScenario === 'supply'
         ? `<p>Los resultados muestran la distribución óptima de suministros entre las ${matrixSize} ciudades de la red. Los valores representan las cantidades que deben ser transportadas para satisfacer la demanda en cada nodo. El método ${method.toUpperCase()} ${result.converged ? 'convergió exitosamente' : 'no logró converger'} en ${result.iterations} iteraciones con una norma residual de ${Utils.formatNum(LinearSystems.norm(res))}.</p><p><strong>Implicación práctica:</strong> Un planificador puede usar esta distribución para asignar recursos de transporte de manera eficiente durante una crisis de abastecimiento.</p>`
         : `<p>El sistema modela la propagación de rumores y compras de pánico entre ${matrixSize} zonas urbanas. Los valores obtenidos representan el nivel de propagación de rumores en cada zona. ${result.converged ? 'La convergencia del método indica estabilidad en el modelo' : 'La falta de convergencia sugiere inestabilidad'}.</p><p><strong>Implicación práctica:</strong> Las autoridades pueden identificar las zonas más vulnerables a la propagación de rumores y concentrar esfuerzos de comunicación oficial.</p>`;
       interpDiv.innerHTML = `<div class="interpretation-box"><h4>📊 Interpretación de Resultados</h4>${ctx}</div>`;
     }
+  }
+
+  function renderSensitivityTable(labels, sensitivity) {
+    const rows = labels.map((label, i) => [
+      label,
+      Utils.formatNum(sensitivity.base[i], 4),
+      Utils.formatNum(sensitivity.plus5[i], 4),
+      Utils.formatNum(sensitivity.plus5[i] - sensitivity.base[i], 4)
+    ]);
+    rows.push([
+      '<strong>AmplificaciÃ³n global</strong>',
+      '-',
+      '-',
+      `<strong>${Utils.formatNum(sensitivity.amplification, 3)}x</strong>`
+    ]);
+    Utils.createTable(['Zona / variable', 'Actual', 'Con demanda +5%', 'Cambio'], rows, 'ls-sensitivity-table');
   }
 
   function displayComparison(results) {

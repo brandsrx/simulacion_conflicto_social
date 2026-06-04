@@ -1,4 +1,4 @@
-/* ============================================
+﻿/* ============================================
    Differential Equations Module
    Euler, Heun, Runge-Kutta 4
    Scenarios: B (Fuel) + G (Social N-M-D)
@@ -79,6 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('deq-fuel-R0').value = fuelData.R0;
       document.getElementById('deq-fuel-entrada').value = fuelData.params.entrada;
       document.getElementById('deq-fuel-consumo').value = fuelData.params.consumoBase;
+      document.getElementById('deq-fuel-critico').value = fuelData.nivelCritico;
+      document.getElementById('deq-fuel-panico').value = fuelData.params.factorPanico;
       document.getElementById('deq-tEnd').value = fuelData.days;
       document.getElementById('deq-h').value = 1;
     } else {
@@ -134,9 +136,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const R0 = parseFloat(document.getElementById('deq-fuel-R0').value);
       const entrada = parseFloat(document.getElementById('deq-fuel-entrada').value);
       const consumo = parseFloat(document.getElementById('deq-fuel-consumo').value);
+      const nivelCritico = parseFloat(document.getElementById('deq-fuel-critico').value);
+      const factorPanico = parseFloat(document.getElementById('deq-fuel-panico').value);
       // R'(t) = entrada - consumoBase * R * (1 + factorPanico * sin(t/10))
-      const fFuel = (t, y) => [entrada - consumo * y[0] * (1 + 0.02 * Math.sin(t * 0.1))];
-      displayFuelResults(solve(fFuel, [R0]), h, tEnd, R0, entrada, consumo);
+      const fFuel = (t, y) => [entrada - consumo * y[0] * (1 + factorPanico * Math.sin(t * 0.1))];
+      displayFuelResults(solve(fFuel, [R0]), h, tEnd, R0, entrada, consumo, nivelCritico, factorPanico);
     } else {
       const N0 = parseFloat(document.getElementById('deq-social-N0').value);
       const M0 = parseFloat(document.getElementById('deq-social-M0').value);
@@ -161,8 +165,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  function crossingTime(steps, threshold) {
+    for (let i = 1; i < steps.length; i++) {
+      const prev = steps[i - 1];
+      const curr = steps[i];
+      const y0 = prev.y[0];
+      const y1 = curr.y[0];
+      if ((y0 >= threshold && y1 <= threshold) || (y0 <= threshold && y1 >= threshold)) {
+        if (Math.abs(y1 - y0) < 1e-12) return curr.t;
+        const ratio = (threshold - y0) / (y1 - y0);
+        return prev.t + ratio * (curr.t - prev.t);
+      }
+    }
+    return null;
+  }
+
+  function fuelSlope(entrada, consumo, factorPanico, t, reserve) {
+    return entrada - consumo * reserve * (1 + factorPanico * Math.sin(t * 0.1));
+  }
+
   // ---- FUEL RESULTS ----
-  function displayFuelResults(results, h, tEnd, R0, entrada, consumo) {
+  function displayFuelResults(results, h, tEnd, R0, entrada, consumo, nivelCritico, factorPanico) {
     const mNames = { euler: 'Euler', heun: 'Heun', rk4: 'Runge-Kutta 4' };
     const keys = Object.keys(results);
     const rk = results[keys[0]];
@@ -171,33 +194,35 @@ document.addEventListener('DOMContentLoaded', () => {
     let html = '<div class="grid-4" style="margin-bottom:1.5rem">';
     keys.forEach(k => {
       const last = results[k][results[k].length - 1];
-      html += `<div class="result-card"><h4>${mNames[k]} — R final</h4><div class="value cyan">${Utils.formatNum(last.y[0], 2)} L</div></div>`;
+      html += `<div class="result-card"><h4>${mNames[k]} - R final</h4><div class="value cyan">${Utils.formatNum(last.y[0], 2)} L</div></div>`;
     });
-    const critDay = rk.find(s => s.y[0] <= fuelData.nivelCritico);
-    const deplDay = rk.find(s => s.y[0] <= 0);
-    html += `<div class="result-card"><h4>Nivel Crítico (${fuelData.nivelCritico}L)</h4><div class="value amber">${critDay ? 'Día ' + Math.round(critDay.t) : 'No alcanzado'}</div></div>`;
-    html += `<div class="result-card"><h4>Agotamiento Total</h4><div class="value rose">${deplDay ? 'Día ' + Math.round(deplDay.t) : 'No ocurre'}</div></div>`;
+    const critTime = crossingTime(rk, nivelCritico);
+    const deplTime = crossingTime(rk, 0);
+    const lastReserve = rk[rk.length - 1].y[0];
+    const finalSlope = fuelSlope(entrada, consumo, factorPanico, tEnd, Math.max(0, lastReserve));
+    html += `<div class="result-card"><h4>Nivel Critico (${nivelCritico}L)</h4><div class="value amber">${critTime !== null ? 'Dia ' + Utils.formatNum(critTime, 2) : 'No alcanzado'}</div></div>`;
+    html += `<div class="result-card"><h4>Agotamiento Total</h4><div class="value rose">${deplTime !== null ? 'Dia ' + Utils.formatNum(deplTime, 2) : 'No ocurre'}</div></div>`;
+    html += `<div class="result-card"><h4>Tendencia final</h4><div class="value ${finalSlope < 0 ? 'rose' : 'emerald'}">${finalSlope < 0 ? 'Bajando' : 'Recuperando'}</div></div>`;
     html += '</div>';
 
     // Questions answered
-    html += '<div class="interpretation-box" style="margin-bottom:1.5rem"><h4>📋 Respuestas a las Preguntas del Escenario</h4>';
-    html += `<p><strong>1. ¿En cuántos días la reserva llega a nivel crítico?</strong> ${critDay ? 'En aproximadamente ' + Math.round(critDay.t) + ' días las reservas bajan de ' + fuelData.nivelCritico + ' litros.' : 'Con los parámetros actuales, la reserva no llega al nivel crítico.'}</p>`;
-    html += `<p><strong>2. ¿Qué pasa si aumenta el consumo diario?</strong> Aumente la tasa de consumo usando los botones "¿Qué pasa si...?" para simular este escenario.</p>`;
-    html += `<p><strong>3. ¿Qué pasa si se reduce el abastecimiento?</strong> Reduzca la entrada usando los botones de escenario para ver el efecto.</p>`;
+    html += '<div class="interpretation-box" style="margin-bottom:1.5rem"><h4>Respuestas a las Preguntas del Escenario</h4>';
+    html += `<p><strong>1. En cuantos dias la reserva llega a nivel critico?</strong> ${critTime !== null ? 'En aproximadamente ' + Utils.formatNum(critTime, 2) + ' dias las reservas bajan de ' + nivelCritico + ' litros.' : 'Con los parametros actuales, la reserva no llega al nivel critico.'}</p>`;
+    html += `<p><strong>2. Que pasa si aumenta el consumo diario?</strong> La tasa actual es ${consumo}; si aumenta, el termino de salida crece y el cruce critico aparece antes.</p>`;
+    html += `<p><strong>3. Que pasa si se reduce el abastecimiento?</strong> La entrada actual es ${entrada} L/dia; si baja, la pendiente R'(t) se vuelve mas negativa y la reserva pierde capacidad de recuperacion.</p>`;
     if (keys.length > 1) {
       const eulerFinal = results.euler ? results.euler[results.euler.length - 1].y[0] : 0;
       const rk4Final = results.rk4 ? results.rk4[results.rk4.length - 1].y[0] : 0;
-      html += `<p><strong>4. ¿Qué método da aproximación más estable?</strong> RK4 es el más estable. Al día ${tEnd}: Euler=${Utils.formatNum(eulerFinal, 1)}L vs RK4=${Utils.formatNum(rk4Final, 1)}L (diferencia: ${Utils.formatNum(Math.abs(eulerFinal - rk4Final), 1)}L).</p>`;
-      html += `<p><strong>5. Diferencia entre métodos:</strong> Euler (error O(h), simple), Heun (error O(h²), predictor-corrector), RK4 (error O(h⁴), 4 evaluaciones por paso). RK4 es ~${Utils.formatNum(Math.abs(eulerFinal - rk4Final) / Math.max(1, Math.abs(rk4Final)) * 100, 1)}% más preciso que Euler.</p>`;
+      html += `<p><strong>4. Que metodo da aproximacion mas estable?</strong> RK4 es el mas estable. Al dia ${tEnd}: Euler=${Utils.formatNum(eulerFinal, 1)}L vs RK4=${Utils.formatNum(rk4Final, 1)}L (diferencia: ${Utils.formatNum(Math.abs(eulerFinal - rk4Final), 1)}L).</p>`;
+      html += `<p><strong>5. Diferencia entre metodos:</strong> Euler (error O(h), simple), Heun (error O(h^2), predictor-corrector), RK4 (error O(h^4), 4 evaluaciones por paso). RK4 es ~${Utils.formatNum(Math.abs(eulerFinal - rk4Final) / Math.max(1, Math.abs(rk4Final)) * 100, 1)}% mas preciso que Euler.</p>`;
     }
     html += '</div>';
-
     // Table
-    html += '<h3 style="margin:1rem 0 0.75rem;font-size:1rem">Evolución de Reservas</h3><div id="deq-table"></div>';
+    html += '<h3 style="margin:1rem 0 0.75rem;font-size:1rem">EvoluciÃ³n de Reservas</h3><div id="deq-table"></div>';
     Utils.showResults('deq-results', html);
 
     const sr = Math.max(1, Math.floor(rk.length / 25));
-    const tHeaders = ['Día', ...keys.map(k => `R(t) ${mNames[k]}`)];
+    const tHeaders = ['DÃ­a', ...keys.map(k => `R(t) ${mNames[k]}`)];
     const tRows = rk.filter((_, i) => i % sr === 0 || i === rk.length - 1).map(s => {
       const row = [Math.round(s.t)];
       keys.forEach(k => {
@@ -216,11 +241,11 @@ document.addEventListener('DOMContentLoaded', () => {
       data: results[k].filter((_, j) => j % si === 0).map(s => Math.max(0, s.y[0])),
       borderColor: ChartManager.defaults.palette[i]
     }));
-    ds.push({ label: `Nivel Crítico (${fuelData.nivelCritico}L)`, data: new Array(labels.length).fill(fuelData.nivelCritico), borderColor: '#f43f5e', borderDash: [5, 5], pointRadius: 0 });
+    ds.push({ label: `Nivel Critico (${nivelCritico}L)`, data: new Array(labels.length).fill(nivelCritico), borderColor: '#f43f5e', borderDash: [5, 5], pointRadius: 0 });
 
     ChartManager.createLine('deq-evolution-chart', labels, ds, {
-      plugins: { title: { display: true, text: 'Evolución de Reservas de Combustible', color: '#f1f5f9', font: { size: 14, family: 'Inter' } } },
-      scales: { x: { title: { display: true, text: 'Días', color: '#94a3b8' } }, y: { title: { display: true, text: 'Reservas (litros)', color: '#94a3b8' } } }
+      plugins: { title: { display: true, text: 'EvoluciÃ³n de Reservas de Combustible', color: '#f1f5f9', font: { size: 14, family: 'Inter' } } },
+      scales: { x: { title: { display: true, text: 'DÃ­as', color: '#94a3b8' } }, y: { title: { display: true, text: 'Reservas (litros)', color: '#94a3b8' } } }
     });
 
     // Stability chart
@@ -240,10 +265,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const interpDiv = document.getElementById('deq-interpretation');
     if (interpDiv) {
       const finalR = rk[rk.length - 1].y[0];
-      interpDiv.innerHTML = `<div class="interpretation-box"><h4>📊 Interpretación: Vaciado de Reservas de Carburantes</h4>
-        <p>Con una entrada de <strong>${entrada} litros/día</strong> (vs ${fuelData.entradaNormal} en condiciones normales) y tasa de consumo de <strong>${consumo}</strong>, las reservas ${finalR > 0 ? 'se estabilizan en <strong>' + Utils.formatNum(finalR, 0) + ' litros</strong>' : 'se <strong>agotan completamente</strong>'}.</p>
-        <p>El modelo R'(t) = entrada - α·R captura la dinámica donde un mayor nivel de reservas genera mayor consumo (por confianza), mientras que la reducción de reservas genera pánico adicional.</p>
-        <p><strong>Para los tomadores de decisiones:</strong> Se requiere un suministro mínimo de <strong>${Utils.formatNum(consumo * fuelData.nivelCritico, 0)} litros/día</strong> para mantener las reservas por encima del nivel crítico.</p>
+      interpDiv.innerHTML = `<div class="interpretation-box"><h4>ðŸ“Š InterpretaciÃ³n: Vaciado de Reservas de Carburantes</h4>
+        <p>Con una entrada de <strong>${entrada} litros/dÃ­a</strong> (vs ${fuelData.entradaNormal} en condiciones normales) y tasa de consumo de <strong>${consumo}</strong>, las reservas ${finalR > 0 ? 'se estabilizan en <strong>' + Utils.formatNum(finalR, 0) + ' litros</strong>' : 'se <strong>agotan completamente</strong>'}.</p>
+        <p>El modelo R'(t) = entrada - Î±Â·R captura la dinÃ¡mica donde un mayor nivel de reservas genera mayor consumo (por confianza), mientras que la reducciÃ³n de reservas genera pÃ¡nico adicional.</p>
+        <p><strong>Para los tomadores de decisiones:</strong> Se requiere un suministro minimo de <strong>${Utils.formatNum(consumo * nivelCritico * (1 + Math.max(0, factorPanico)), 0)} litros/dia</strong> para mantener las reservas por encima del nivel critico elegido.</p>
       </div>`;
     }
   }
@@ -267,20 +292,20 @@ document.addEventListener('DOMContentLoaded', () => {
     html += `<div class="result-card"><h4>N final (Neutrales)</h4><div class="value cyan">${(last.y[0] * 100).toFixed(1)}%</div></div>`;
     html += `<div class="result-card"><h4>M final (Manifestantes)</h4><div class="value rose">${(last.y[1] * 100).toFixed(1)}%</div></div>`;
     html += `<div class="result-card"><h4>D final (Mediadores)</h4><div class="value emerald">${(last.y[2] * 100).toFixed(1)}%</div></div>`;
-    html += `<div class="result-card"><h4>Pico Manifestantes</h4><div class="value amber">${(peakM * 100).toFixed(1)}% (día ${peakDay ? Math.round(peakDay.t) : '?'})</div></div>`;
+    html += `<div class="result-card"><h4>Pico Manifestantes</h4><div class="value amber">${(peakM * 100).toFixed(1)}% (dÃ­a ${peakDay ? Math.round(peakDay.t) : '?'})</div></div>`;
     html += '</div>';
 
     // Questions answered
-    html += '<div class="interpretation-box" style="margin-bottom:1.5rem"><h4>📋 Respuestas a las Preguntas del Escenario</h4>';
-    html += `<p><strong>1. ¿El conflicto tiende a estabilizarse?</strong> ${isStable ? 'Sí, el sistema alcanza un equilibrio con N=' + (last.y[0]*100).toFixed(1) + '%, M=' + (last.y[1]*100).toFixed(1) + '%, D=' + (last.y[2]*100).toFixed(1) + '%.' : 'No, el sistema muestra oscilaciones o crecimiento inestable al final del período.'}</p>`;
-    html += `<p><strong>2. ¿El número de manifestantes aumenta o disminuye?</strong> ${last.y[1] > rk[0].y[1] ? 'Aumenta de ' + (rk[0].y[1]*100).toFixed(1) + '% a ' + (last.y[1]*100).toFixed(1) + '% (crecimiento neto).' : 'Disminuye de ' + (rk[0].y[1]*100).toFixed(1) + '% a ' + (last.y[1]*100).toFixed(1) + '% (el diálogo es efectivo).'} El pico fue de ${(peakM*100).toFixed(1)}% el día ${peakDay ? Math.round(peakDay.t) : '?'}.</p>`;
-    html += `<p><strong>3. ¿Qué pasa si mejora la tasa de diálogo?</strong> Use el botón "Diálogo efectivo" para simular. Un aumento en c (efectividad) y b (retorno) reduce significativamente el pico de manifestantes.</p>`;
-    html += `<p><strong>4. ¿Qué pasa si no existen mediadores?</strong> Use el botón "Sin mediadores" para simular. Sin mediadores (D₀=0, k=0), los manifestantes crecen sin control.</p>`;
-    html += `<p><strong>5. ¿Qué parámetros hacen que el conflicto se masifique?</strong> Una tasa de influencia a alta (>${Utils.formatNum(params.a, 2)}) combinada con baja efectividad de diálogo c (<${Utils.formatNum(params.c, 2)}) lleva a masificación. Use el botón "Conflicto masivo" para verlo.</p>`;
+    html += '<div class="interpretation-box" style="margin-bottom:1.5rem"><h4>ðŸ“‹ Respuestas a las Preguntas del Escenario</h4>';
+    html += `<p><strong>1. Â¿El conflicto tiende a estabilizarse?</strong> ${isStable ? 'SÃ­, el sistema alcanza un equilibrio con N=' + (last.y[0]*100).toFixed(1) + '%, M=' + (last.y[1]*100).toFixed(1) + '%, D=' + (last.y[2]*100).toFixed(1) + '%.' : 'No, el sistema muestra oscilaciones o crecimiento inestable al final del perÃ­odo.'}</p>`;
+    html += `<p><strong>2. Â¿El nÃºmero de manifestantes aumenta o disminuye?</strong> ${last.y[1] > rk[0].y[1] ? 'Aumenta de ' + (rk[0].y[1]*100).toFixed(1) + '% a ' + (last.y[1]*100).toFixed(1) + '% (crecimiento neto).' : 'Disminuye de ' + (rk[0].y[1]*100).toFixed(1) + '% a ' + (last.y[1]*100).toFixed(1) + '% (el diÃ¡logo es efectivo).'} El pico fue de ${(peakM*100).toFixed(1)}% el dÃ­a ${peakDay ? Math.round(peakDay.t) : '?'}.</p>`;
+    html += `<p><strong>3. Â¿QuÃ© pasa si mejora la tasa de diÃ¡logo?</strong> Use el botÃ³n "DiÃ¡logo efectivo" para simular. Un aumento en c (efectividad) y b (retorno) reduce significativamente el pico de manifestantes.</p>`;
+    html += `<p><strong>4. Â¿QuÃ© pasa si no existen mediadores?</strong> Use el botÃ³n "Sin mediadores" para simular. Sin mediadores (Dâ‚€=0, k=0), los manifestantes crecen sin control.</p>`;
+    html += `<p><strong>5. Â¿QuÃ© parÃ¡metros hacen que el conflicto se masifique?</strong> Una tasa de influencia a alta (>${Utils.formatNum(params.a, 2)}) combinada con baja efectividad de diÃ¡logo c (<${Utils.formatNum(params.c, 2)}) lleva a masificaciÃ³n. Use el botÃ³n "Conflicto masivo" para verlo.</p>`;
     html += '</div>';
 
     // Table
-    html += '<h3 style="margin:1rem 0 0.75rem;font-size:1rem">Evolución del Sistema N-M-D</h3><div id="deq-table"></div>';
+    html += '<h3 style="margin:1rem 0 0.75rem;font-size:1rem">EvoluciÃ³n del Sistema N-M-D</h3><div id="deq-table"></div>';
     Utils.showResults('deq-results', html);
 
     const sr = Math.max(1, Math.floor(rk.length / 25));
@@ -290,43 +315,45 @@ document.addEventListener('DOMContentLoaded', () => {
       (s.y[1] * 100).toFixed(2) + '%',
       (s.y[2] * 100).toFixed(2) + '%'
     ]);
-    Utils.createTable(['Día', 'N (Neutrales)', 'M (Manifestantes)', 'D (Mediadores)'], tRows, 'deq-table');
+    Utils.createTable(['DÃ­a', 'N (Neutrales)', 'M (Manifestantes)', 'D (Mediadores)'], tRows, 'deq-table');
 
     // Chart
     const si = Math.max(1, Math.floor(rk.length / 100));
     const labels = rk.filter((_, i) => i % si === 0).map(s => Math.round(s.t));
     ChartManager.createLine('deq-evolution-chart', labels, [
-      { label: 'N — Neutrales', data: rk.filter((_, i) => i % si === 0).map(s => (s.y[0] * 100)), borderColor: '#06b6d4', fill: true, backgroundColor: 'rgba(6,182,212,0.08)' },
-      { label: 'M — Manifestantes', data: rk.filter((_, i) => i % si === 0).map(s => (s.y[1] * 100)), borderColor: '#f43f5e', fill: true, backgroundColor: 'rgba(244,63,94,0.08)' },
-      { label: 'D — Mediadores', data: rk.filter((_, i) => i % si === 0).map(s => (s.y[2] * 100)), borderColor: '#10b981', fill: true, backgroundColor: 'rgba(16,185,129,0.08)' }
+      { label: 'N â€” Neutrales', data: rk.filter((_, i) => i % si === 0).map(s => (s.y[0] * 100)), borderColor: '#06b6d4', fill: true, backgroundColor: 'rgba(6,182,212,0.08)' },
+      { label: 'M â€” Manifestantes', data: rk.filter((_, i) => i % si === 0).map(s => (s.y[1] * 100)), borderColor: '#f43f5e', fill: true, backgroundColor: 'rgba(244,63,94,0.08)' },
+      { label: 'D â€” Mediadores', data: rk.filter((_, i) => i % si === 0).map(s => (s.y[2] * 100)), borderColor: '#10b981', fill: true, backgroundColor: 'rgba(16,185,129,0.08)' }
     ], {
-      plugins: { title: { display: true, text: 'Dinámica Social: Neutrales - Manifestantes - Mediadores', color: '#f1f5f9', font: { size: 14, family: 'Inter' } } },
-      scales: { x: { title: { display: true, text: 'Días', color: '#94a3b8' } }, y: { title: { display: true, text: 'Porcentaje de Población (%)', color: '#94a3b8' } } }
+      plugins: { title: { display: true, text: 'DinÃ¡mica Social: Neutrales - Manifestantes - Mediadores', color: '#f1f5f9', font: { size: 14, family: 'Inter' } } },
+      scales: { x: { title: { display: true, text: 'DÃ­as', color: '#94a3b8' } }, y: { title: { display: true, text: 'Porcentaje de PoblaciÃ³n (%)', color: '#94a3b8' } } }
     });
 
     // Method comparison
     if (keys.length > 1) {
       const mDataSets = keys.map((k, idx) => ({
-        label: `M — ${mNames[k]}`,
+        label: `M â€” ${mNames[k]}`,
         data: results[k].filter((_, i) => i % si === 0).map(s => (s.y[1] * 100)),
         borderColor: ChartManager.defaults.palette[idx]
       }));
       ChartManager.createLine('deq-stability-chart', labels, mDataSets, {
-        plugins: { title: { display: true, text: 'Comparación de Métodos — Curva M (Manifestantes)', color: '#f1f5f9', font: { size: 14, family: 'Inter' } } }
+        plugins: { title: { display: true, text: 'ComparaciÃ³n de MÃ©todos â€” Curva M (Manifestantes)', color: '#f1f5f9', font: { size: 14, family: 'Inter' } } }
       });
     }
 
     // Interpretation
     const interpDiv = document.getElementById('deq-interpretation');
     if (interpDiv) {
-      interpDiv.innerHTML = `<div class="interpretation-box"><h4>📊 Interpretación: Difusión del Descontento Social</h4>
-        <p>El modelo N-M-D muestra que los manifestantes activos alcanzan un pico de <strong>${(peakM*100).toFixed(1)}%</strong> alrededor del día <strong>${peakDay ? Math.round(peakDay.t) : '?'}</strong>. Al final del período, la composición social es: ${(last.y[0]*100).toFixed(1)}% neutrales, ${(last.y[1]*100).toFixed(1)}% manifestantes, ${(last.y[2]*100).toFixed(1)}% mediadores.</p>
-        <p><strong>Modelo:</strong> N'(t) = -a·N·M + b·D | M'(t) = a·N·M - c·M·D | D'(t) = k·M - r·D</p>
+      interpDiv.innerHTML = `<div class="interpretation-box"><h4>ðŸ“Š InterpretaciÃ³n: DifusiÃ³n del Descontento Social</h4>
+        <p>El modelo N-M-D muestra que los manifestantes activos alcanzan un pico de <strong>${(peakM*100).toFixed(1)}%</strong> alrededor del dÃ­a <strong>${peakDay ? Math.round(peakDay.t) : '?'}</strong>. Al final del perÃ­odo, la composiciÃ³n social es: ${(last.y[0]*100).toFixed(1)}% neutrales, ${(last.y[1]*100).toFixed(1)}% manifestantes, ${(last.y[2]*100).toFixed(1)}% mediadores.</p>
+        <p><strong>Modelo:</strong> N'(t) = -aÂ·NÂ·M + bÂ·D | M'(t) = aÂ·NÂ·M - cÂ·MÂ·D | D'(t) = kÂ·M - rÂ·D</p>
         <p>Los ciudadanos neutrales se convierten en manifestantes al interactuar con ellos (tasa a=${params.a}). Los mediadores reducen los manifestantes (tasa c=${params.c}) y facilitan el retorno a la neutralidad (tasa b=${params.b}). El desgaste de los mediadores (r=${params.r}) limita su efectividad a largo plazo.</p>
-        <p><strong>Para los tomadores de decisiones:</strong> Fortalecer la mediación (aumentar k y c) es la estrategia más efectiva. Las intervenciones deben realizarse <strong>antes del día ${peakDay ? Math.round(peakDay.t) : '?'}</strong> (pico de manifestantes).</p>
+        <p><strong>Para los tomadores de decisiones:</strong> Fortalecer la mediaciÃ³n (aumentar k y c) es la estrategia mÃ¡s efectiva. Las intervenciones deben realizarse <strong>antes del dÃ­a ${peakDay ? Math.round(peakDay.t) : '?'}</strong> (pico de manifestantes).</p>
       </div>`;
     }
   }
 
   loadScenarioParams();
 });
+
+

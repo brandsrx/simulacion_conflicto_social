@@ -1,0 +1,106 @@
+INCISOS A Y B
+Proyecto: Simulacion numerica de abastecimiento, precios y conflicto social
+
+Fuente revisada:
+- Se reviso el PDF "DESAFIO FINAL DE METODOS NUMERICOS.docx.pdf".
+- En el documento, el inciso A corresponde al Escenario A: optimizacion del abastecimiento y red de transporte.
+- El inciso B corresponde al Escenario B: vaciado critico de reservas en plantas de carburantes.
+
+INCISO A - SISTEMAS DE ECUACIONES LINEALES
+Archivo principal mejorado:
+- pages/linear-systems.html
+- js/modules/linear-systems.js
+
+Que hace este modulo:
+El modulo resuelve sistemas lineales de la forma Ax = b. En el contexto del proyecto, A representa la relacion entre zonas, rutas o restricciones de distribucion, b representa la demanda, y x representa la cantidad que debe asignarse o transportarse hacia cada zona.
+
+Metodos usados:
+- LU
+- Jacobi
+- Gauss-Seidel
+- SOR
+- Gradiente conjugado
+
+Mejoras realizadas:
+1. Se agregaron botones de escenarios rapidos para la red de suministros:
+   - Demanda normal
+   - Demanda +5%
+   - Demanda +10%
+   - Bloqueo Norte
+   - Bloqueo Centro
+   - Bloqueo Sur
+
+2. Se agrego un analisis de sensibilidad ante un aumento de demanda del 5%.
+   Esto permite responder mejor la pregunta del PDF: "La solucion cambia mucho si la demanda aumenta?"
+
+3. Se agrego el calculo del numero de condicion estimado.
+   Esto ayuda a determinar si el sistema es estable o sensible a pequenos cambios.
+
+4. Se identifica la zona o variable mas afectada cuando cambia la demanda.
+   Esto responde directamente a la pregunta: "Que zona queda mas afectada?"
+
+5. Se agrego una tabla comparativa entre la solucion actual y la solucion con demanda +5%.
+
+6. Se agrego un grafico de barras para comparar visualmente la distribucion actual contra la distribucion con mayor demanda.
+
+Por que mejora el inciso A:
+Antes el modulo resolvia el sistema, pero la interpretacion era mas general. Ahora el modulo no solo calcula x, sino que tambien permite probar bloqueos, aumentos de demanda, estabilidad numerica y vulnerabilidad por zona. Eso lo acerca mas a las preguntas concretas del enunciado.
+
+INCISO B - ECUACIONES DIFERENCIALES
+Archivo principal mejorado:
+- pages/differential-equations.html
+- js/modules/differential-equations.js
+
+Que hace este modulo:
+El modulo simula la evolucion temporal de reservas de carburantes mediante una ecuacion diferencial ordinaria. La reserva R(t) cambia segun la entrada de combustible y el consumo.
+
+Modelo usado:
+R'(t) = entrada - consumoBase * R(t) * (1 + beta * sin(t/10))
+
+Donde:
+- R(t): reserva disponible en litros.
+- entrada: reabastecimiento diario.
+- consumoBase: tasa de consumo.
+- beta: factor de panico o variacion de consumo.
+- t: tiempo en dias.
+
+Metodos usados:
+- Euler
+- Heun
+- Runge-Kutta de cuarto orden (RK4)
+
+Mejoras realizadas:
+1. Se agrego el campo "Nivel critico".
+   Antes el nivel critico estaba fijo en el codigo. Ahora el usuario puede modificarlo desde la pagina.
+
+2. Se agrego el campo "Factor de panico (beta)".
+   Antes el factor de panico estaba fijo. Ahora puede modificarse para simular mayor o menor presion sobre el consumo.
+
+3. Se mejoro el calculo del dia critico.
+   En vez de tomar solo el primer punto discreto de la tabla, ahora se calcula el cruce con interpolacion lineal entre pasos. Esto da un dia critico mas preciso.
+
+4. Se agrego el calculo del dia de agotamiento total con el mismo criterio de cruce.
+
+5. Se agrego una tarjeta de "Tendencia final".
+   Esta indica si al final de la simulacion la reserva sigue bajando o empieza a recuperarse.
+
+6. Se ajusto la linea del grafico de nivel critico para usar el valor que escriba el usuario, no un valor fijo.
+
+7. Se mejoro la respuesta textual a las preguntas del escenario:
+   - En cuantos dias llega al nivel critico.
+   - Que ocurre si aumenta el consumo.
+   - Que ocurre si se reduce el abastecimiento.
+   - Que metodo es mas estable.
+   - Diferencia entre Euler, Heun y RK4.
+
+Por que mejora el inciso B:
+Antes el modulo simulaba las reservas, pero algunos parametros importantes estaban escondidos en el codigo y el dia critico se mostraba de forma menos precisa. Ahora la simulacion es mas interactiva, permite comparar escenarios de crisis y responde con mayor claridad a las preguntas del PDF.
+
+RESUMEN GENERAL
+Las mejoras convierten los incisos A y B en modulos mas completos para evaluacion:
+- Tienen mayor interactividad.
+- Responden preguntas especificas del enunciado.
+- Incluyen analisis numerico adicional.
+- Muestran resultados con tablas, graficos e interpretacion.
+- Permiten modificar parametros sin tocar el codigo.
+

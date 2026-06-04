@@ -39,6 +39,14 @@
         <div class="scenario-box">
           <h3>Escenario A: Red de Distribución de Suministros</h3>
           <p>Cinco ciudades conectadas por rutas de transporte. La matriz A representa los coeficientes de flujo entre nodos. El vector b representa la demanda de cada ciudad. La solución x indica las cantidades óptimas a transportar.</p>
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.9rem">
+            <button class="btn btn-secondary btn-sm ls-supply-whatif" data-variation="normal">Demanda normal</button>
+            <button class="btn btn-secondary btn-sm ls-supply-whatif" data-variation="plus5">Demanda +5%</button>
+            <button class="btn btn-secondary btn-sm ls-supply-whatif" data-variation="plus10">Demanda +10%</button>
+            <button class="btn btn-secondary btn-sm ls-supply-whatif" data-variation="bloqueoNorte">Bloqueo Norte</button>
+            <button class="btn btn-secondary btn-sm ls-supply-whatif" data-variation="bloqueoCentro">Bloqueo Centro</button>
+            <button class="btn btn-secondary btn-sm ls-supply-whatif" data-variation="bloqueoSur">Bloqueo Sur</button>
+          </div>
         </div>
       </div>
       <div class="scenario-desc" id="scenario-rumor">
