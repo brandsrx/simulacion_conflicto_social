@@ -175,7 +175,7 @@ const SampleData = {
     functions: {
       costoIngreso: {
         name: "Costo acumulado supera ingreso familiar",
-        expr: "C(t) - Ingreso: integral de precios hasta día t menos ingreso mensual",
+        expr: "8.5*x + 1.05*x^2 - 3500",
         // f(t) = costo_acumulado(t) - ingreso_familiar
         // Aproximación: f(t) = 8.5*t + 1.05*t² - 3500  (costo crece cuadráticamente)
         f: (t) => 8.5 * t + 1.05 * t * t - 3500,
@@ -185,7 +185,7 @@ const SampleData = {
       },
       tasaReposicion: {
         name: "Tasa crítica de reposición de carburante",
-        expr: "F(r) = r - consumo_base × R_eq: tasa que iguala consumo y llegada",
+        expr: "x - 0.08*(10000 - 50*x)",
         // En equilibrio: entrada = consumoBase * R  →  r = 0.08 * R
         // f(r) = r - 0.08*(10000 - 50*r) → 0 (encontrar r que equilibre)
         f: (r) => r - 0.08 * (10000 - 50 * r),
@@ -195,12 +195,12 @@ const SampleData = {
       },
       umbralOpinion: {
         name: "Umbral de opinión social (estabilidad → masificación)",
-        expr: "G(M) = a·N·M - c·M·D - threshold: punto donde manifestantes crecen",
+        expr: "0.3*(1 - x)*x - 0.1*x*0.15 - 0.01",
         // Cuando M'(t) > 0: aNM - cMD > 0 → aN > cD → M*(aN - cD) > 0
         // f(M) = 0.3*(0.7-M)*M - 0.1*M*0.1 - 0.01 (punto de bifurcación)
         f: (M) => 0.3 * (1.0 - M) * M - 0.1 * M * 0.15 - 0.01,
         df: (M) => 0.3 * (1.0 - 2 * M) - 0.015,
-        interval: [0.01, 0.95],
+        interval: [0.01, 0.08],
         description: "Fracción de manifestantes donde el conflicto pasa de estable a masificación"
       }
     }
@@ -243,24 +243,24 @@ const SampleData = {
   // ============================
   team: [
     {
-      name: "Carlos Mendoza",
-      role: "Frontend & UI/UX",
-      modules: "Homepage, About, Métodos, UI Global",
-      avatar: "CM",
+      name: "Ramiro Brandon Mamani Quisbert",
+      role: "Estructura, Frontend y Escenarios C/E",
+      modules: "Estructura del proyecto, UI global, Escenario C, Escenario E",
+      avatar: "RB",
       color: "#6366f1"
     },
     {
-      name: "María Fernández",
-      role: "Algoritmos Numéricos I",
-      modules: "Sistemas Lineales, Raíces de Ecuaciones",
-      avatar: "MF",
+      name: "Maya Celina Cadiz Quispe",
+      role: "Escenarios D/F/G y Análisis",
+      modules: "Escenario D, Escenario F, Escenario G, interpretación académica",
+      avatar: "MC",
       color: "#06b6d4"
     },
     {
-      name: "Andrés Ramírez",
-      role: "Algoritmos Numéricos II",
-      modules: "Interpolación, Integración, Ecuaciones Diferenciales",
-      avatar: "AR",
+      name: "Sergio Alejandro Macias Quispe",
+      role: "Escenarios A/B y Modelado",
+      modules: "Escenario A, Escenario B, modelado numérico, revisión",
+      avatar: "SM",
       color: "#10b981"
     }
   ]
