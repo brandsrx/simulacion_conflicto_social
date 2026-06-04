@@ -34,13 +34,12 @@
     <div style="margin-bottom:1.5rem">
       <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem">Seleccionar Umbral</h3>
       <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-        <button class="btn btn-primary btn-sm threshold-btn active" data-func="reserve">📦 Punto Crítico de Reservas</button>
-        <button class="btn btn-secondary btn-sm threshold-btn" data-func="fuel">⛽ Tasa de Reposición</button>
-        <button class="btn btn-secondary btn-sm threshold-btn" data-func="price">💰 Umbral de Precio</button>
-        <button class="btn btn-secondary btn-sm threshold-btn" data-func="demand">📊 Demanda Máxima</button>
+        <button class="btn btn-primary btn-sm threshold-btn active" data-func="costoIngreso">Costo vs. ingreso familiar</button>
+        <button class="btn btn-secondary btn-sm threshold-btn" data-func="tasaReposicion">Tasa de reposición</button>
+        <button class="btn btn-secondary btn-sm threshold-btn" data-func="umbralOpinion">Umbral de opinión social</button>
       </div>
     </div>
-    <p id="roots-func-desc" style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1rem">Determina el momento en que las reservas alcanzan un nivel crítico</p>
+    <p id="roots-func-desc" style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1rem">Determina el punto donde un modelo no lineal alcanza su umbral crítico.</p>
 
     <!-- Configuration -->
     <div class="grid-2" style="margin-bottom:1.5rem">
@@ -48,7 +47,7 @@
         <h3 style="font-weight:700;margin-bottom:1rem">Función y Parámetros</h3>
         <div class="form-group">
           <label class="form-label">Expresión f(x)</label>
-          <input type="text" id="roots-func-expr" class="form-input mono" value="R(t) = 10000 * e^(-0.08t) + 200t - 5000">
+          <input type="text" id="roots-func-expr" class="form-input mono" value="8.5*x + 1.05*x^2 - 3500">
         </div>
         <div class="grid-2" style="gap:0.75rem">
           <div class="form-group">
