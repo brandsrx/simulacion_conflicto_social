@@ -60,9 +60,9 @@ python3 -m http.server 8000
 
 | Miembro | Rol | Módulos |
 |---------|-----|---------|
-| Carlos Mendoza | Frontend & UI/UX | Homepage, About, Métodos, UI |
-| María Fernández | Algoritmos I | Sist. Lineales, Raíces |
-| Andrés Ramírez | Algoritmos II | Interpolación, Integración, EDO |
+| Ramiro Brandon Mamani Quisbert | Frontend & UI/UX | Homepage, About, Métodos, UI |
+| Maya Celina Cadiz Quispe | Algoritmos I | Sist. Lineales, Raíces |
+| Sergio Alejandro Macias Quispe | Algoritmos II | Interpolación, Integración, EDO |
 
 ## 📄 Tecnologías
 
